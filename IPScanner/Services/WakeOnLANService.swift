@@ -110,17 +110,3 @@ public struct WakeOnLANService: Sendable {
     }
 }
 
-/// Ensures a continuation is resumed exactly once, no matter how many times the
-/// connection callback fires afterwards.
-private final class ResumeOnce: @unchecked Sendable {
-    private let lock = NSLock()
-    private var didResume = false
-
-    func run(_ action: () -> Void) {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !didResume else { return }
-        didResume = true
-        action()
-    }
-}
