@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+build/
+
+# Swift Package Manager
+.build/
+.build-*/
+Packages/
+Package.pins
+.swiftpm/
+
+# CocoaPods (non usato, per sicurezza)
+Pods/
+
+# AppCode / JetBrains
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+
+# CodeGraph local index
+.codegraph/
+
+# Memory plugin
+.remember/
+
+# Firebase / Google
+# I GoogleService-Info.plist reali NON vanno MAI committati (vedi README).
+# Un contributore può aggiungere il proprio file per abilitare Crashlytics.
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+
+# Screenshot/build artifacts locali
+*.png.tmp
