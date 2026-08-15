@@ -1,0 +1,22 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPScanner needs access to the local network to detect connected devices."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPScanner ha bisogno di accedere alla rete locale per rilevare i dispositivi connessi."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

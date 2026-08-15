@@ -2,9 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>IPScanner needs access to the local network to detect connected devices.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_ipscanner._tcp</string>
+		<string>_services._dns-sd._udp</string>
+		<string>_http._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_smb._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_rfb._tcp</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
 	</array>
 </dict>
 </plist>
