@@ -11,6 +11,44 @@
 
 import Foundation
 
+#if os(iOS)
+// net/route.h is a private header on iOS, so the routing types the sysctl call
+// needs are not exposed to Swift. These definitions mirror the (stable) xnu ABI
+// exactly; macOS provides them through the SDK instead.
+private let NET_RT_FLAGS: Int32 = 2
+private let RTF_LLINFO: Int32 = 0x400
+private let RTM_VERSION: UInt8 = 5
+
+private struct rt_metrics {
+    var rmx_locks: UInt32 = 0
+    var rmx_mtu: UInt32 = 0
+    var rmx_hopcount: UInt32 = 0
+    var rmx_expire: Int32 = 0
+    var rmx_recvpipe: UInt32 = 0
+    var rmx_sendpipe: UInt32 = 0
+    var rmx_ssthresh: UInt32 = 0
+    var rmx_rtt: UInt32 = 0
+    var rmx_rttvar: UInt32 = 0
+    var rmx_pksent: UInt32 = 0
+    var rmx_filler: (UInt32, UInt32, UInt32, UInt32) = (0, 0, 0, 0)
+}
+
+private struct rt_msghdr {
+    var rtm_msglen: UInt16 = 0
+    var rtm_version: UInt8 = 0
+    var rtm_type: UInt8 = 0
+    var rtm_index: UInt16 = 0
+    var rtm_flags: Int32 = 0
+    var rtm_addrs: Int32 = 0
+    var rtm_pid: Int32 = 0
+    var rtm_seq: Int32 = 0
+    var rtm_errno: Int32 = 0
+    var rtm_use: Int32 = 0
+    var rtm_inits: UInt32 = 0
+    var rtm_rmx: rt_metrics = rt_metrics()
+}
+#endif
+
 public struct ARPEntry: Sendable, Hashable {
     public let ipAddress: String
     /// nil when the entry is incomplete (host not answered yet).
