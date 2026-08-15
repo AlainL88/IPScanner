@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct RootView: View {
     @Environment(\.modelContext) private var context
