@@ -14,35 +14,39 @@ import SwiftData
 ///  - "Cloud" syncs personalized data (Device + CustomNetworkRange) via CloudKit.
 ///  - "Local" keeps scan history on-device only.
 ///
-/// If the CloudKit-backed store can't be created (contributor without an iCloud
-/// container, iCloud disabled, etc.) we fall back to a purely local store so the
-/// app always launches.
+/// CloudKit is only attempted when the app is actually signed with the iCloud
+/// container entitlement. Otherwise — fresh clones, builds without the
+/// capability, simulators without iCloud — we use a purely local store so the
+/// app always launches without crashing.
 enum PersistenceController {
     static let container: ModelContainer = {
         let allModels = Schema([Device.self, CustomNetworkRange.self, ScanSession.self])
 
-        let cloudConfig = ModelConfiguration(
-            "Cloud",
-            schema: Schema([Device.self, CustomNetworkRange.self]),
-            isStoredInMemoryOnly: false,
-            cloudKitDatabase: .automatic
-        )
-        let localConfig = ModelConfiguration(
-            "Local",
-            schema: Schema([ScanSession.self]),
-            isStoredInMemoryOnly: false
-        )
-
-        do {
-            return try ModelContainer(for: allModels, configurations: [cloudConfig, localConfig])
-        } catch {
-            NSLog("SwiftData/CloudKit container unavailable (%@); using a local-only store.", String(describing: error))
-            let localOnly = ModelConfiguration(schema: allModels, isStoredInMemoryOnly: false)
+        if hasICloudEntitlement {
             do {
-                return try ModelContainer(for: allModels, configurations: [localOnly])
+                let cloudConfig = ModelConfiguration(
+                    "Cloud",
+                    schema: Schema([Device.self, CustomNetworkRange.self]),
+                    isStoredInMemoryOnly: false,
+                    cloudKitDatabase: .automatic
+                )
+                let localConfig = ModelConfiguration(
+                    "Local",
+                    schema: Schema([ScanSession.self]),
+                    isStoredInMemoryOnly: false
+                )
+                return try ModelContainer(for: allModels, configurations: [cloudConfig, localConfig])
             } catch {
-                fatalError("Could not create ModelContainer: \(error)")
+                NSLog("SwiftData/CloudKit container unavailable (%@); using a local-only store.", String(describing: error))
             }
+        }
+
+        // Local-only store — no CloudKit. Safe on every build/signing setup.
+        let localOnly = ModelConfiguration(schema: allModels, isStoredInMemoryOnly: false)
+        do {
+            return try ModelContainer(for: allModels, configurations: [localOnly])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
         }
     }()
 
@@ -54,4 +58,11 @@ enum PersistenceController {
             configurations: [config]
         )
     }()
+
+    /// True when iCloud is actually usable from this process: the app carries
+    /// the entitlement AND the user is signed in. `ubiquityIdentityToken` is nil
+    /// in every other case (fresh clone, no capability, iCloud disabled).
+    private static var hasICloudEntitlement: Bool {
+        FileManager.default.ubiquityIdentityToken != nil
+    }
 }

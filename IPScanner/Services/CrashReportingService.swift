@@ -28,14 +28,26 @@ public final class CrashReportingService: @unchecked Sendable {
     init() {}
 
     /// Configures Crashlytics if and only if the GoogleService-Info.plist is
-    /// present. The `firebaseConfigure` closure is injected for tests.
+    /// present and its BUNDLE_ID matches the running app. The `firebaseConfigure`
+    /// closure is injected for tests.
     public func configure(
         bundle: Bundle = .main,
         firebaseConfigure: (() -> Void)? = nil
     ) {
-        guard bundle.path(forResource: "GoogleService-Info", ofType: "plist") != nil else {
+        guard let plistPath = bundle.path(forResource: "GoogleService-Info", ofType: "plist") else {
             isEnabled = false
             NSLog("Crashlytics disabled: GoogleService-Info.plist not found")
+            return
+        }
+
+        // Guard against a stale or mismatched plist initializing Firebase with
+        // credentials that belong to a different bundle.
+        if let plist = NSDictionary(contentsOfFile: plistPath),
+           let plistBundleID = plist["BUNDLE_ID"] as? String,
+           let appBundleID = bundle.bundleIdentifier,
+           plistBundleID != appBundleID {
+            isEnabled = false
+            NSLog("Crashlytics disabled: GoogleService-Info.plist BUNDLE_ID (%@) does not match %@", plistBundleID, appBundleID)
             return
         }
 
