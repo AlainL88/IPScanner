@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct IPScannerApp: App {
@@ -19,5 +20,6 @@ struct IPScannerApp: App {
         WindowGroup {
             Text("IPScanner")
         }
+        .modelContainer(PersistenceController.container)
     }
 }
