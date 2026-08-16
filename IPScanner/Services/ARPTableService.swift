@@ -85,7 +85,8 @@ public enum ARPTableService {
             guard msglen >= headerSize, offset + msglen <= buffer.count else { break }
 
             if header.rtm_flags & RTF_LLINFO != 0 {
-                let parsed = parseAddresses(header: header, buffer: buffer, headerOffset: offset, msglen: msglen)
+                let resolvedHeaderSize = resolveHeaderSize(in: buffer, offset: offset, msglen: msglen)
+                let parsed = parseAddresses(header: header, buffer: buffer, headerOffset: offset, msglen: msglen, headerSize: resolvedHeaderSize)
                 if let ip = parsed.ip {
                     entries.append(ARPEntry(ipAddress: ip, macAddress: parsed.mac, interface: parsed.interface))
                 }
@@ -113,13 +114,35 @@ public enum ARPTableService {
 
     // MARK: - Parsing
 
+    /// The rt_msghdr layout is nominally 92 bytes, but a few iOS kernels use a
+    /// slightly different routing structure. We probe nearby sizes and pick the
+    /// one whose first sockaddr looks valid (AF_INET for RTA_DST, AF_LINK for
+    /// RTA_GATEWAY), so MAC parsing stays correct on any device.
+    private static func resolveHeaderSize(in buffer: [UInt8], offset: Int, msglen: Int) -> Int {
+        let nominal = MemoryLayout<rt_msghdr>.size
+        let messageEnd = offset + msglen
+        for delta in [0, -4, 4, -8, 8] {
+            let candidate = nominal + delta
+            let pos = offset + candidate
+            guard pos + 8 <= messageEnd else { continue }
+            let saLen = buffer[pos]
+            let family = buffer[pos + 1]
+            let validFamily = family == sa_family_t(AF_INET) || family == sa_family_t(AF_LINK)
+            if validFamily && Int(saLen) > 0 && pos + Int(saLen) <= messageEnd {
+                return candidate
+            }
+        }
+        return nominal
+    }
+
     private static func parseAddresses(
         header: rt_msghdr,
         buffer: [UInt8],
         headerOffset: Int,
-        msglen: Int
+        msglen: Int,
+        headerSize: Int
     ) -> (ip: String?, mac: String?, interface: String?) {
-        var cursor = headerOffset + MemoryLayout<rt_msghdr>.size
+        var cursor = headerOffset + headerSize
         let end = headerOffset + msglen
         let mask = header.rtm_addrs
         var ip: String?
