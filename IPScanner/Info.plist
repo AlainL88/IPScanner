@@ -9,14 +9,22 @@
 		<string>_ipscanner._tcp</string>
 		<string>_services._dns-sd._udp</string>
 		<string>_http._tcp</string>
+		<string>_https._tcp</string>
 		<string>_ssh._tcp</string>
 		<string>_smb._tcp</string>
-		<string>_airplay._tcp</string>
 		<string>_rfb._tcp</string>
+		<string>_airplay._tcp</string>
+		<string>_airtunes._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_printer._tcp</string>
+		<string>_companion-link._tcp</string>
+		<string>_spotify-connect._tcp</string>
+		<string>_hap._tcp</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
+		<string>remote-notification</string>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
