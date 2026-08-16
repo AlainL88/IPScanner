@@ -16,16 +16,19 @@ import SwiftData
 /// entity that syncs via SwiftData CloudKit.
 @Model
 final class Device {
-    var ipAddress: String
+    // Non-optional properties carry declaration-level defaults so the schema is
+    // valid for CloudKit (which requires every attribute to be optional or have
+    // a default value) regardless of how instances are initialized.
+    var ipAddress: String = ""
     var macAddress: String?
     var hostname: String?
     var vendor: String?
     var customName: String?
     var customIcon: String?
-    var isWhitelisted: Bool
-    var firstSeen: Date
-    var lastSeen: Date
-    var isOnline: Bool
+    var isWhitelisted: Bool = false
+    var firstSeen: Date = Foundation.Date.now
+    var lastSeen: Date = Foundation.Date.now
+    var isOnline: Bool = true
 
     init(
         ipAddress: String,

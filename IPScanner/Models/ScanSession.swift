@@ -13,10 +13,11 @@ import SwiftData
 /// instead of relationships, which keeps the model simple and CloudKit-safe.
 @Model
 final class ScanSession {
-    var startedAt: Date
-    var cidr: String
-    var duration: TimeInterval
-    var deviceSnapshots: [DeviceSnapshot]
+    // Declaration-level defaults keep the model CloudKit-valid.
+    var startedAt: Date = Foundation.Date.now
+    var cidr: String = ""
+    var duration: TimeInterval = 0
+    var deviceSnapshots: [DeviceSnapshot] = []
 
     init(
         startedAt: Date = .now,

@@ -12,10 +12,11 @@ import SwiftData
 /// the sidebar. Synced via CloudKit alongside Device metadata.
 @Model
 final class CustomNetworkRange {
-    var name: String
-    var cidr: String
-    var icon: String
-    var sortOrder: Int
+    // Declaration-level defaults keep the model CloudKit-valid.
+    var name: String = ""
+    var cidr: String = ""
+    var icon: String = "network"
+    var sortOrder: Int = 0
 
     init(name: String, cidr: String, icon: String = "network", sortOrder: Int = 0) {
         self.name = name
