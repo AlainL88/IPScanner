@@ -9,6 +9,10 @@ import SwiftUI
 
 struct DeviceRowView: View {
     let device: ScannedDevice
+    /// Resolved label: custom name (persisted) > hostname > IP.
+    let displayName: String
+    /// Resolved icon: custom icon (persisted) > inferred from hostname/IP.
+    let icon: String
     let density: RowDensity
     let columns: Set<DeviceColumn>
 
@@ -63,14 +67,6 @@ struct DeviceRowView: View {
             .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
             .frame(width: 10, height: 10)
             .accessibilityLabel(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
-    }
-
-    private var icon: String {
-        Device.inferredIcon(for: device.hostname, ip: device.ip)
-    }
-
-    private var displayName: String {
-        device.hostname ?? device.ip
     }
 
     private var subtitle: String {

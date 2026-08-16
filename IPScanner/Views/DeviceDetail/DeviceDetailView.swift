@@ -39,7 +39,7 @@ struct DeviceDetailView: View {
             .padding()
         }
         .scrollDismissesKeyboard(.interactively)
-        .navigationTitle(device.hostname ?? device.ip)
+        .navigationTitle(displayName)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif

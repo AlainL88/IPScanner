@@ -12,10 +12,16 @@ struct ScanListView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var context
     @Query(sort: \CustomNetworkRange.sortOrder) private var ranges: [CustomNetworkRange]
+    @Query(sort: \Device.ipAddress) private var persistedDevices: [Device]
 
     let viewModel: ScanViewModel
     let target: NetworkTarget
     @State private var showingTools = false
+
+    /// ip -> persisted Device, for resolving custom names/icons/whitelist.
+    private var persistedByIP: [String: Device] {
+        Dictionary(persistedDevices.map { ($0.ipAddress, $0) }, uniquingKeysWith: { a, _ in a })
+    }
 
     var body: some View {
         Group {
@@ -27,11 +33,14 @@ struct ScanListView: View {
                         ScanProgressView(phase: viewModel.phase)
                     }
                     ForEach(viewModel.filteredDevices) { device in
+                        let persisted = persistedByIP[device.ip]
                         NavigationLink {
                             DeviceDetailView(device: device, viewModel: viewModel)
                         } label: {
                             DeviceRowView(
                                 device: device,
+                                displayName: persisted?.customName ?? device.hostname ?? device.ip,
+                                icon: persisted?.customIcon ?? Device.inferredIcon(for: device.hostname, ip: device.ip),
                                 density: appState.rowDensity,
                                 columns: appState.visibleColumns
                             )
