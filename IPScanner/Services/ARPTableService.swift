@@ -100,6 +100,17 @@ public enum ARPTableService {
         read().first(where: { $0.ipAddress == ip })?.macAddress
     }
 
+    /// Placeholder link-layer addresses used by virtual/tunnel interfaces.
+    /// They carry no vendor information and would only confuse the UI.
+    public static func isPlaceholderMAC(_ mac: String) -> Bool {
+        switch mac {
+        case "00:00:00:00:00:00", "02:00:00:00:00:00", "FF:FF:FF:FF:FF:FF":
+            return true
+        default:
+            return false
+        }
+    }
+
     // MARK: - Parsing
 
     private static func parseAddresses(
@@ -177,6 +188,8 @@ public enum ARPTableService {
         guard addressLength == 6 else { return (nil, interface) }
         let macBytes = buffer[(dataStart + nameLength)..<(dataStart + nameLength + addressLength)]
         let mac = macBytes.map { String(format: "%02X", $0) }.joined(separator: ":")
-        return (mac, interface)
+        // Tunnel/virtual links (VPN, utun, ...) report placeholder link-layer
+        // addresses like 02:00:00:00:00:00; hide them instead of showing junk.
+        return (isPlaceholderMAC(mac) ? nil : mac, interface)
     }
 }
