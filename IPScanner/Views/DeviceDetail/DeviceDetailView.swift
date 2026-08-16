@@ -23,6 +23,7 @@ struct DeviceDetailView: View {
     @State private var showingIconPicker = false
     @State private var pingResult: PingResult?
     @State private var customName = ""
+    @State private var showingMACInfo = false
     @FocusState private var nameFocused: Bool
 
     var body: some View {
@@ -46,6 +47,11 @@ struct DeviceDetailView: View {
         .task { loadPersistedDevice() }
         .onDisappear { saveCustomName() }
         .sheet(isPresented: $showingIconPicker) { iconPickerSheet }
+        .alert(String(localized: "Why is the MAC missing?"), isPresented: $showingMACInfo) {
+            Button(String(localized: "OK"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS."))
+        }
     }
 
     // MARK: - Header
@@ -84,7 +90,7 @@ struct DeviceDetailView: View {
         VStack(spacing: 0) {
             infoRow(label: String(localized: "IP Address"), value: device.ip)
             Divider()
-            infoRow(label: String(localized: "MAC Address"), value: device.mac ?? "—")
+            macRow
             Divider()
             infoRow(label: String(localized: "Hostname"), value: device.hostname ?? "—")
             Divider()
@@ -105,6 +111,33 @@ struct DeviceDetailView: View {
             Spacer()
             Text(value)
                 .multilineTextAlignment(.trailing)
+        }
+        .font(.subheadline)
+        .padding(.vertical, 8)
+    }
+
+    /// MAC row with an info button when the address is unavailable (iOS exposes
+    /// no neighbor ARP info, so it shows N/A instead of a fake value).
+    private var macRow: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(String(localized: "MAC Address"))
+                .foregroundStyle(.secondary)
+            Spacer()
+            if let mac = device.mac, !mac.isEmpty {
+                Text(mac)
+                    .multilineTextAlignment(.trailing)
+            } else {
+                Text(String(localized: "N/A"))
+                    .multilineTextAlignment(.trailing)
+                Button {
+                    showingMACInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(String(localized: "Why is the MAC missing?"))
+            }
         }
         .font(.subheadline)
         .padding(.vertical, 8)

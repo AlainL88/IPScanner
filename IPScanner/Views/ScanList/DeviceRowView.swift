@@ -74,8 +74,13 @@ struct DeviceRowView: View {
         if columns.contains(.vendor), let vendor = device.vendor, !vendor.isEmpty {
             parts.append(vendor)
         }
-        if columns.contains(.mac), let mac = device.mac, !mac.isEmpty {
-            parts.append(mac)
+        if columns.contains(.mac) {
+            if let mac = device.mac, !mac.isEmpty {
+                parts.append(mac)
+            } else {
+                // On iOS the ARP table is restricted, so MACs are not exposed.
+                parts.append(String(localized: "N/A"))
+            }
         }
         return parts.joined(separator: "  ·  ")
     }

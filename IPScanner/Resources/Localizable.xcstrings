@@ -1,1768 +1,1826 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "" : {
-
+  "sourceLanguage": "en",
+  "strings": {
+    "": {},
+    "%@ (%@) stopped responding.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@) stopped responding."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@) non risponde più."
+          }
+        }
+      }
+    },
+    "%@ is now online (%@).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is now online (%@)."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ è ora online (%@)."
+          }
+        }
+      }
     },
-    "%@ (%@) stopped responding." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (%@) stopped responding."
+    "%lld devices found": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld devices found"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (%@) non risponde più."
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dispositivi trovati"
           }
         }
       }
     },
-    "%@ is now online (%@)." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ is now online (%@)."
+    "%lld open ports": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld open ports"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ è ora online (%@)."
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld porte aperte"
           }
         }
       }
     },
-    "%lld devices found" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld devices found"
+    "About": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld dispositivi trovati"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informazioni"
           }
         }
       }
     },
-    "%lld open ports" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld open ports"
+    "Add": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld porte aperte"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi"
           }
         }
       }
     },
-    "About" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "About"
+    "Add network": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add network"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Informazioni"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi rete"
           }
         }
       }
     },
-    "Add" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add"
+    "Add range": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add range"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aggiungi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi intervallo"
           }
         }
       }
     },
-    "Add network" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add network"
+    "All devices": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All devices"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aggiungi rete"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutti i dispositivi"
           }
         }
       }
     },
-    "Add range" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add range"
+    "All ports closed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All ports closed"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aggiungi intervallo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutte le porte chiuse"
           }
         }
       }
     },
-    "All devices" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All devices"
+    "Appearance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutti i dispositivi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspetto"
           }
         }
       }
     },
-    "All ports closed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All ports closed"
+    "Ascending": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ascending"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutte le porte chiuse"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crescente"
           }
         }
       }
     },
-    "Appearance" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appearance"
+    "Background scanning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background scanning"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aspetto"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione in background"
           }
         }
       }
     },
-    "Ascending" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ascending"
+    "Broadcast": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadcast"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crescente"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadcast"
           }
         }
       }
     },
-    "Background scanning" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Background scanning"
+    "Cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansione in background"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annulla"
           }
         }
       }
     },
-    "Broadcast" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Broadcast"
+    "Choose icon": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose icon"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Broadcast"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli icona"
           }
         }
       }
     },
-    "Cancel" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel"
+    "CIDR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CIDR"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Annulla"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CIDR"
           }
         }
       }
     },
-    "Choose icon" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose icon"
+    "Close": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegli icona"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chiudi"
           }
         }
       }
     },
-    "CIDR" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CIDR"
+    "Column visibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Column visibility"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CIDR"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visibilità colonne"
           }
         }
       }
     },
-    "Close" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close"
+    "Columns": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Columns"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chiudi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colonne"
           }
         }
       }
     },
-    "Column visibility" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Column visibility"
+    "Comfortable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comfortable"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visibilità colonne"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comoda"
           }
         }
       }
     },
-    "Columns" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Columns"
+    "Compact": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compact"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Colonne"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compatta"
           }
         }
       }
     },
-    "Comfortable" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comfortable"
+    "Crash reporting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crash reporting"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comoda"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segnalazione crash"
           }
         }
       }
     },
-    "Compact" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact"
+    "Crashlytics disabled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crashlytics disabled"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compatta"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crashlytics disattivato"
           }
         }
       }
     },
-    "Crash reporting" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crash reporting"
+    "Crashlytics enabled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crashlytics enabled"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Segnalazione crash"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crashlytics attivo"
           }
         }
       }
     },
-    "Crashlytics disabled" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crashlytics disabled"
+    "Cumulative mode": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cumulative mode"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crashlytics disattivato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modalità cumulativa"
           }
         }
       }
     },
-    "Crashlytics enabled" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crashlytics enabled"
+    "Custom networks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom networks"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crashlytics attivo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reti personalizzate"
           }
         }
       }
     },
-    "Cumulative mode" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cumulative mode"
+    "Customization": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Customization"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modalità cumulativa"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personalizzazione"
           }
         }
       }
     },
-    "Custom networks" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom networks"
+    "Delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reti personalizzate"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina"
           }
         }
       }
     },
-    "Customization" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Customization"
+    "Descending": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descending"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personalizzazione"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decrescente"
           }
         }
       }
     },
-    "Delete" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete"
+    "Device offline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device offline"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elimina"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dispositivo offline"
           }
         }
       }
     },
-    "Descending" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Descending"
+    "Discovering services…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discovering services…"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Decrescente"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricerca servizi…"
           }
         }
       }
     },
-    "Device offline" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Device offline"
+    "Done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dispositivo offline"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine"
           }
         }
       }
     },
-    "Discovering services…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discovering services…"
+    "Edit": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ricerca servizi…"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifica"
           }
         }
       }
     },
-    "Done" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Done"
+    "Export": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fine"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta"
           }
         }
       }
     },
-    "Edit" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit"
+    "Export CSV": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export CSV"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modifica"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta CSV"
           }
         }
       }
     },
-    "Export" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export"
+    "Export JSON": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export JSON"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esporta"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esporta JSON"
           }
         }
       }
     },
-    "Export CSV" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export CSV"
+    "Finishing…": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finishing…"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esporta CSV"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completamento…"
           }
         }
       }
     },
-    "Export JSON" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export JSON"
+    "First seen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First seen"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esporta JSON"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prima volta visto"
           }
         }
       }
     },
-    "Finishing…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Finishing…"
+    "History": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "History"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completamento…"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cronologia"
           }
         }
       }
     },
-    "First seen" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "First seen"
+    "Hostname": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hostname"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prima volta visto"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome host"
           }
         }
       }
     },
-    "History" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "History"
+    "Import": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cronologia"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importa"
           }
         }
       }
     },
-    "Hostname" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hostname"
+    "Invalid network range": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid network range"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nome host"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervallo di rete non valido"
           }
         }
       }
     },
-    "Import" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Import"
+    "IP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IP"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Importa"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IP"
           }
         }
       }
     },
-    "Invalid network range" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invalid network range"
+    "IP Address": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IP Address"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intervallo di rete non valido"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indirizzo IP"
           }
         }
       }
     },
-    "IP" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IP"
+    "IPScanner": {},
+    "Last seen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last seen"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IP"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ultimo visto"
           }
         }
       }
     },
-    "IP Address" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IP Address"
+    "Local network": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local network"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indirizzo IP"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rete locale"
           }
         }
       }
     },
-    "IPScanner" : {
-
+    "MAC": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAC"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAC"
+          }
+        }
+      }
     },
-    "Last seen" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Last seen"
+    "MAC Address": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAC Address"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ultimo visto"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indirizzo MAC"
           }
         }
       }
     },
-    "Local network" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Local network"
+    "Name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rete locale"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome"
           }
         }
       }
     },
-    "MAC" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MAC"
+    "Network not available": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network not available"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MAC"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rete non disponibile"
           }
         }
       }
     },
-    "MAC Address" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MAC Address"
+    "Networks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Networks"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indirizzo MAC"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reti"
           }
         }
       }
     },
-    "Name" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Name"
+    "New": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nome"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuovo"
           }
         }
       }
     },
-    "Network not available" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network not available"
+    "New device found": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New device found"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rete non disponibile"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuovo dispositivo trovato"
           }
         }
       }
     },
-    "Networks" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Networks"
+    "No devices found": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No devices found"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reti"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun dispositivo trovato"
           }
         }
       }
     },
-    "New" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New"
+    "No peers found": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No peers found"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun dispositivo trovato"
           }
         }
       }
     },
-    "New device found" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New device found"
+    "No previous scans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No previous scans"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovo dispositivo trovato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuna scansione precedente"
           }
         }
       }
     },
-    "No devices found" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No devices found"
+    "No scan results to share": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No scan results to share"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessun dispositivo trovato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun risultato da condividere"
           }
         }
       }
     },
-    "No peers found" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No peers found"
+    "Notifications": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessun dispositivo trovato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifiche"
           }
         }
       }
     },
-    "No previous scans" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No previous scans"
+    "Offline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessuna scansione precedente"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
           }
         }
       }
     },
-    "No scan results to share" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No scan results to share"
+    "On iOS, background scans are best-effort and may be delayed by the system.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On iOS, background scans are best-effort and may be delayed by the system."
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessun risultato da condividere"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su iOS le scansioni in background sono best-effort e possono essere ritardate dal sistema."
           }
         }
       }
     },
-    "Notifications" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notifications"
+    "Online": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Online"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notifiche"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Online"
           }
         }
       }
     },
-    "Offline" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline"
+    "Open in browser": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in browser"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri nel browser"
           }
         }
       }
     },
-    "On iOS, background scans are best-effort and may be delayed by the system." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On iOS, background scans are best-effort and may be delayed by the system."
+    "Open VNC": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open VNC"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Su iOS le scansioni in background sono best-effort e possono essere ritardate dal sistema."
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri in VNC"
           }
         }
       }
     },
-    "Online" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
+    "Peer transfer": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peer transfer"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trasferimento peer-to-peer"
           }
         }
       }
     },
-    "Open in browser" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open in browser"
+    "Ping": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ping"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apri nel browser"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ping"
           }
         }
       }
     },
-    "Open VNC" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open VNC"
+    "Please connect to a network to scan.": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please connect to a network to scan."
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apri in VNC"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connettiti a una rete per eseguire la scansione."
           }
         }
       }
     },
-    "Peer transfer" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Peer transfer"
+    "Port Scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port Scan"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trasferimento peer-to-peer"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione porte"
           }
         }
       }
     },
-    "Ping" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ping"
+    "Ports": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ports"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ping"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porte"
           }
         }
       }
     },
-    "Please connect to a network to scan." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Please connect to a network to scan."
+    "Preparing…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing…"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connettiti a una rete per eseguire la scansione."
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparazione…"
           }
         }
       }
     },
-    "Port Scan" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Port Scan"
+    "Range name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range name"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansione porte"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome intervallo"
           }
         }
       }
     },
-    "Ports" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ports"
+    "Reading ARP cache…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading ARP cache…"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Porte"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lettura cache ARP…"
           }
         }
       }
     },
-    "Preparing…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparing…"
+    "Receive": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receive"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preparazione…"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ricevi"
           }
         }
       }
     },
-    "Range name" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Range name"
+    "Recently offline": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently offline"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nome intervallo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline di recente"
           }
         }
       }
     },
-    "Reading ARP cache…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading ARP cache…"
+    "Rename": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lettura cache ARP…"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rinomina"
           }
         }
       }
     },
-    "Receive" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Receive"
+    "Result": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ricevi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Risultato"
           }
         }
       }
     },
-    "Recently offline" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recently offline"
+    "Retry": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline di recente"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riprova"
           }
         }
       }
     },
-    "Rename" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rename"
+    "Row size": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Row size"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rinomina"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dimensione righe"
           }
         }
       }
     },
-    "Result" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Result"
+    "RTT": {},
+    "Save": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Risultato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva"
           }
         }
       }
     },
-    "Retry" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retry"
+    "Scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Riprova"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansiona"
           }
         }
       }
     },
-    "Row size" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Row size"
+    "Scan history": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan history"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dimensione righe"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cronologia scansioni"
           }
         }
       }
     },
-    "RTT" : {
-
+    "Scan ports": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan ports"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansiona porte"
+          }
+        }
+      }
     },
-    "Save" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
+    "Scanning %@": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning %@"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Salva"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione %@"
           }
         }
       }
     },
-    "Scan" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scan"
+    "Scanning…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning…"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansiona"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione in corso…"
           }
         }
       }
     },
-    "Scan history" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scan history"
+    "Select a device": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a device"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cronologia scansioni"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona un dispositivo"
           }
         }
       }
     },
-    "Scan ports" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scan ports"
+    "Select a network to scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a network to scan"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansiona porte"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seleziona una rete da scansionare"
           }
         }
       }
     },
-    "Scanning %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scanning %@"
+    "Send": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansione %@"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invia"
           }
         }
       }
     },
-    "Scanning…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scanning…"
+    "Send by email": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send by email"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scansione in corso…"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invia via email"
           }
         }
       }
     },
-    "Select a device" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select a device"
+    "Send to another device": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send to another device"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seleziona un dispositivo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invia a un altro dispositivo"
           }
         }
       }
     },
-    "Select a network to scan" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select a network to scan"
+    "Settings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seleziona una rete da scansionare"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impostazioni"
           }
         }
       }
     },
-    "Send" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Send"
+    "Share": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invia"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condividi"
           }
         }
       }
     },
-    "Send by email" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Send by email"
+    "Show only new": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show only new"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invia via email"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra solo nuovi"
           }
         }
       }
     },
-    "Send to another device" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Send to another device"
+    "Sort by": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sort by"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invia a un altro dispositivo"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordina per"
           }
         }
       }
     },
-    "Settings" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "Spacious": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spacious"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impostazioni"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ampia"
           }
         }
       }
     },
-    "Share" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Share"
+    "Start scanning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start scanning"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Condividi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvia scansione"
           }
         }
       }
     },
-    "Show only new" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Show only new"
+    "Start scanning to discover devices on your local network.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start scanning to discover devices on your local network."
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostra solo nuovi"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avvia la scansione per scoprire i dispositivi sulla tua rete locale."
           }
         }
       }
     },
-    "Sort by" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sort by"
+    "Status": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ordina per"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stato"
           }
         }
       }
     },
-    "Spacious" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spacious"
+    "Stop": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ampia"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferma"
           }
         }
       }
     },
-    "Start scanning" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start scanning"
+    "Test Crash": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Crash"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avvia scansione"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Crash"
           }
         }
       }
     },
-    "Start scanning to discover devices on your local network." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start scanning to discover devices on your local network."
+    "Tools": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tools"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Avvia la scansione per scoprire i dispositivi sulla tua rete locale."
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strumenti"
           }
         }
       }
     },
-    "Status" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Status"
+    "Vendor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vendor"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Produttore"
           }
         }
       }
     },
-    "Stop" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stop"
+    "Version": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ferma"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versione"
           }
         }
       }
     },
-    "Test Crash" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Test Crash"
+    "Version %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Test Crash"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versione %@"
           }
         }
       }
     },
-    "Tools" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tools"
+    "Wake failed": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake failed"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Strumenti"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invio Wake fallito"
           }
         }
       }
     },
-    "Vendor" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vendor"
+    "Wake on LAN": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake on LAN"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Produttore"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake on LAN"
           }
         }
       }
     },
-    "Version" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version"
+    "Wake sent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake sent"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Versione"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake inviato"
           }
         }
       }
     },
-    "Version %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version %@"
+    "Whitelist": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whitelist"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Versione %@"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whitelist"
           }
         }
       }
     },
-    "Wake failed" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake failed"
+    "Whitelisted": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whitelisted"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invio Wake fallito"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In whitelist"
           }
         }
       }
     },
-    "Wake on LAN" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake on LAN"
+    "N/A": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N/A"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake on LAN"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N/D"
           }
         }
       }
     },
-    "Wake sent" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake sent"
+    "Why is the MAC missing?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why is the MAC missing?"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wake inviato"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perché manca il MAC?"
           }
         }
       }
     },
-    "Whitelist" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Whitelist"
+    "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS."
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Whitelist"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su iOS il sistema non espone gli indirizzi MAC dei dispositivi vicini (la tabella ARP è limitata). Questa informazione è disponibile su macOS."
           }
         }
       }
     },
-    "Whitelisted" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Whitelisted"
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In whitelist"
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
