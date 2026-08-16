@@ -20,10 +20,10 @@ struct DeviceDetailView: View {
     let viewModel: ScanViewModel
 
     @State private var persistedDevice: Device?
-    @State private var showingRename = false
     @State private var showingIconPicker = false
     @State private var pingResult: PingResult?
-    @State private var renameText = ""
+    @State private var customName = ""
+    @FocusState private var nameFocused: Bool
 
     var body: some View {
         ScrollView {
@@ -38,12 +38,13 @@ struct DeviceDetailView: View {
             }
             .padding()
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle(device.hostname ?? device.ip)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .task { loadPersistedDevice() }
-        .sheet(isPresented: $showingRename) { renameSheet }
+        .onDisappear { saveCustomName() }
         .sheet(isPresented: $showingIconPicker) { iconPickerSheet }
     }
 
@@ -119,14 +120,21 @@ struct DeviceDetailView: View {
             HStack {
                 Text(String(localized: "Name"))
                 Spacer()
-                Button {
-                    renameText = persistedDevice?.customName ?? displayName
-                    showingRename = true
-                } label: {
-                    Text(persistedDevice?.customName ?? displayName)
-                        .foregroundStyle(.secondary)
+                TextField(
+                    String(localized: "Name"),
+                    text: $customName,
+                    prompt: Text(device.hostname ?? device.ip)
+                )
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.plain)
+                .focused($nameFocused)
+                .submitLabel(.done)
+                .onSubmit {
+                    nameFocused = false
+                    saveCustomName()
                 }
-                .accessibilityLabel(String(localized: "Rename"))
+                .frame(maxWidth: 240)
+                .accessibilityLabel(String(localized: "Name"))
             }
 
             HStack {
@@ -221,27 +229,6 @@ struct DeviceDetailView: View {
 
     // MARK: - Sheets
 
-    private var renameSheet: some View {
-        NavigationStack {
-            Form {
-                TextField(String(localized: "Name"), text: $renameText)
-            }
-            .navigationTitle(String(localized: "Rename"))
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "Cancel")) { showingRename = false }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "Save")) {
-                        persistedDevice?.customName = renameText.isEmpty ? nil : renameText
-                        try? context.save()
-                        showingRename = false
-                    }
-                }
-            }
-        }
-    }
-
     private var iconPickerSheet: some View {
         NavigationStack {
             let icons = ["desktopcomputer", "laptopcomputer", "iphone", "ipad", "tv", "printer", "server.rack", "router", "camera.fill", "speaker.wave.2.fill", "gamecontroller.fill", "hdd.fill"]
@@ -298,6 +285,15 @@ struct DeviceDetailView: View {
         let ip = device.ip
         let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
         persistedDevice = (try? context.fetch(request))?.first
+        customName = persistedDevice?.customName ?? ""
+    }
+
+    /// Persists the inline name field. An empty (or whitespace-only) value clears
+    /// the custom name and falls back to hostname/IP.
+    private func saveCustomName() {
+        let trimmed = customName.trimmingCharacters(in: .whitespacesAndNewlines)
+        persistedDevice?.customName = trimmed.isEmpty ? nil : trimmed
+        try? context.save()
     }
 
     private func openURL(_ string: String) {
