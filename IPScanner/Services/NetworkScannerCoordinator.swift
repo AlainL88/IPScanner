@@ -108,6 +108,9 @@ public actor NetworkScannerCoordinator {
                 // ARP cache gives MAC addresses for hosts that answered.
                 continuation.yield(.phase(.arpReading))
                 let arpEntries = ARPTableService.read()
+                #if DEBUG
+                print("[ARP] \(arpEntries.count) entries: \(arpEntries.map { "\($0.ipAddress)=\($0.macAddress ?? "nil")" }.joined(separator: ", "))")
+                #endif
                 let macByIP = Dictionary(
                     arpEntries.compactMap { entry in entry.macAddress.map { (entry.ipAddress, $0) } },
                     uniquingKeysWith: { a, _ in a }
@@ -145,6 +148,9 @@ public actor NetworkScannerCoordinator {
                     )
                     devices.append(device)
                     continuation.yield(.device(device))
+                    #if DEBUG
+                    print("[SCAN] device \(device.ip) mac=\(device.mac ?? "nil") hostname=\(device.hostname ?? "nil")")
+                    #endif
                 }
 
                 continuation.yield(.completed(
