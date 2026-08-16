@@ -18,7 +18,7 @@ struct IPScannerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Text("IPScanner")
+            RootView()
         }
         .modelContainer(PersistenceController.container)
     }
