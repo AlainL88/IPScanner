@@ -57,10 +57,6 @@ public struct ARPEntry: Sendable, Hashable {
 }
 
 public enum ARPTableService {
-    #if DEBUG
-    private nonisolated(unsafe) static var debugDumped = 0
-    #endif
-
     /// Reads the whole ARP table as a list of entries.
     public static func read() -> [ARPEntry] {
         var mib = [Int32]([CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO])
@@ -90,15 +86,6 @@ public enum ARPTableService {
 
             if header.rtm_flags & RTF_LLINFO != 0 {
                 let resolvedHeaderSize = resolveHeaderSize(in: buffer, offset: offset, msglen: msglen)
-                #if DEBUG
-                if Self.debugDumped < 3 {
-                    let bytes = buffer[offset..<min(offset + msglen, offset + 120)]
-                        .map { String(format: "%02X", $0) }
-                        .joined(separator: " ")
-                    print("[ARP-RAW] msglen=\(msglen) addrs=\(header.rtm_addrs) headerSize=\(resolvedHeaderSize)\n  \(bytes)")
-                    Self.debugDumped += 1
-                }
-                #endif
                 let parsed = parseAddresses(header: header, buffer: buffer, headerOffset: offset, msglen: msglen, headerSize: resolvedHeaderSize)
                 if let ip = parsed.ip {
                     entries.append(ARPEntry(ipAddress: ip, macAddress: parsed.mac, interface: parsed.interface))
