@@ -15,7 +15,6 @@ struct ScanListView: View {
 
     let viewModel: ScanViewModel
     let target: NetworkTarget
-    @Binding var selectedDeviceIP: String?
     @State private var showingTools = false
 
     var body: some View {
@@ -28,8 +27,8 @@ struct ScanListView: View {
                         ScanProgressView(phase: viewModel.phase)
                     }
                     ForEach(viewModel.filteredDevices) { device in
-                        Button {
-                            selectedDeviceIP = device.ip
+                        NavigationLink {
+                            DeviceDetailView(device: device, viewModel: viewModel)
                         } label: {
                             DeviceRowView(
                                 device: device,
@@ -37,7 +36,6 @@ struct ScanListView: View {
                                 columns: appState.visibleColumns
                             )
                         }
-                        .buttonStyle(.plain)
                         .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
                 }
@@ -52,7 +50,8 @@ struct ScanListView: View {
             }
         }
         .sheet(isPresented: $showingTools) {
-            ToolsView(initialHost: selectedDeviceIP ?? viewModel.devices.first?.ip ?? "", initialMAC: selectedDeviceIP.flatMap { persistedMAC(for: $0) })
+            let host = viewModel.devices.first?.ip ?? ""
+            ToolsView(initialHost: host, initialMAC: persistedMAC(for: host))
         }
     }
 

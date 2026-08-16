@@ -12,15 +12,14 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var appState = AppState()
     @State private var scanViewModel: ScanViewModel?
-    @State private var selectedDeviceIP: String?
 
     var body: some View {
         NavigationSplitView {
             SidebarView()
-        } content: {
-            contentColumn
         } detail: {
-            detailColumn
+            NavigationStack {
+                contentColumn
+            }
         }
         .navigationSplitViewStyle(.balanced)
         .environment(appState)
@@ -36,7 +35,7 @@ struct RootView: View {
         switch appState.selection {
         case .network(let target):
             if let scanViewModel {
-                ScanListView(viewModel: scanViewModel, target: target, selectedDeviceIP: $selectedDeviceIP)
+                ScanListView(viewModel: scanViewModel, target: target)
             }
         case .history:
             HistoryView()
@@ -47,21 +46,6 @@ struct RootView: View {
                 String(localized: "Networks"),
                 systemImage: "network",
                 description: Text(String(localized: "Select a network to scan"))
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var detailColumn: some View {
-        if let ip = selectedDeviceIP,
-           let scanViewModel,
-           let device = scanViewModel.devices.first(where: { $0.ip == ip }) {
-            DeviceDetailView(device: device, viewModel: scanViewModel)
-        } else {
-            ContentUnavailableView(
-                String(localized: "Select a device"),
-                systemImage: "dot.radiowaves.left.and.right",
-                description: Text("")
             )
         }
     }
