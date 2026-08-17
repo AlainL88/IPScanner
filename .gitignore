@@ -44,3 +44,10 @@ GoogleService-Info.plist
 
 # Screenshot/build artifacts locali
 *.png.tmp
+
+# Segreti / credenziali — MAI committare
+*.p12
+*.mobileprovision
+*.certSigningRequest
+*.pem
+*.p8
