@@ -25,6 +25,7 @@ public enum EmailService {
     public static func compose(
         subject: String,
         body: String,
+        recipients: [String]? = nil,
         attachmentName: String? = nil,
         attachmentData: Data? = nil,
         attachmentMime: String = "text/csv"
@@ -32,6 +33,9 @@ public enum EmailService {
         #if os(iOS)
         if MFMailComposeViewController.canSendMail() {
             let controller = MFMailComposeViewController()
+            if let recipients {
+                controller.setToRecipients(recipients)
+            }
             controller.setSubject(subject)
             controller.setMessageBody(body, isHTML: false)
             if let attachmentName, let attachmentData {
@@ -39,7 +43,7 @@ public enum EmailService {
             }
             presentOniOS(controller)
         } else {
-            openMailto(subject: subject, body: body)
+            openMailto(recipients: recipients, subject: subject, body: body)
         }
         #elseif os(macOS)
         guard let service = NSSharingService(named: .composeEmail) else { return }
@@ -64,10 +68,11 @@ public enum EmailService {
         presenter.present(controller, animated: true)
     }
 
-    private static func openMailto(subject: String, body: String) {
+    private static func openMailto(recipients: [String]?, subject: String, body: String) {
         let subjectQuery = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let bodyQuery = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        guard let url = URL(string: "mailto:?subject=\(subjectQuery)&body=\(bodyQuery)") else { return }
+        let to = recipients?.joined(separator: ",") ?? ""
+        guard let url = URL(string: "mailto:\(to)?subject=\(subjectQuery)&body=\(bodyQuery)") else { return }
         UIApplication.shared.open(url)
     }
     #endif

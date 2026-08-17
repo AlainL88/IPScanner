@@ -7,6 +7,7 @@
 
 import SwiftUI
 #if os(iOS)
+import UIKit
 import BackgroundTasks
 #endif
 
@@ -63,6 +64,20 @@ struct SettingsView: View {
                         ? String(localized: "Crashlytics enabled")
                         : String(localized: "Crashlytics disabled")
                 )
+                Button {
+                    let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+                    var body = "Descrivi il tuo problema:\n\nApp: IPScanner\nVersione App: \(appVersion)"
+                    #if os(iOS)
+                    body += "\nVersione iOS: \(UIDevice.current.systemVersion)"
+                    #endif
+                    EmailService.compose(
+                        subject: "Richiesta di supporto: IPScanner",
+                        body: body,
+                        recipients: ["support@aldeveloping.it"]
+                    )
+                } label: {
+                    Label(String(localized: "Contact support"), systemImage: "envelope")
+                }
                 #if DEBUG
                 Button(String(localized: "Test Crash"), role: .destructive) {
                     showingCrashConfirm = true
