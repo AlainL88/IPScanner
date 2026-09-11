@@ -18,9 +18,17 @@ struct ScanListView: View {
     let target: NetworkTarget
     @State private var showingTools = false
 
-    /// ip -> persisted Device, for resolving custom names/icons/whitelist.
-    private var persistedByIP: [String: Device] {
-        Dictionary(persistedDevices.map { ($0.ipAddress, $0) }, uniquingKeysWith: { a, _ in a })
+    /// Resolves the persisted Device record for a scanned device,
+    /// prioritizing MAC address matching when available, then IP address.
+    private func persistedDevice(for device: ScannedDevice) -> Device? {
+        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+            if let match = persistedDevices.first(where: {
+                $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
+            }) {
+                return match
+            }
+        }
+        return persistedDevices.first(where: { $0.ipAddress == device.ip })
     }
 
     var body: some View {
@@ -33,7 +41,7 @@ struct ScanListView: View {
                         ScanProgressView(phase: viewModel.phase)
                     }
                     ForEach(viewModel.filteredDevices) { device in
-                        let persisted = persistedByIP[device.ip]
+                        let persisted = persistedDevice(for: device)
                         NavigationLink {
                             DeviceDetailView(device: device, viewModel: viewModel)
                         } label: {
@@ -65,6 +73,9 @@ struct ScanListView: View {
     }
 
     private func persistedMAC(for ip: String) -> String? {
+        if let scanned = viewModel.devices.first(where: { $0.ip == ip }), let mac = scanned.mac, !mac.isEmpty {
+            return mac
+        }
         let ip = ip
         let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
         return (try? context.fetch(request))?.first?.macAddress

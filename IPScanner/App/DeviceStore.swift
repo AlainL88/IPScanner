@@ -12,24 +12,49 @@ import SwiftData
 /// scan flow and the background refresh task.
 @MainActor
 enum DeviceStore {
-    /// Inserts or updates a Device for the given snapshot. Preserves any custom
-    /// metadata (name/icon/whitelist) on existing records.
+    /// Inserts or updates a Device for the given snapshot.
+    /// Prefers matching by MAC address when available (stable across IP changes),
+    /// falling back to IP address. Preserves any custom metadata (name/icon/whitelist).
     static func upsert(_ device: ScannedDevice, in context: ModelContext) {
-        let ip = device.ip
-        let request = FetchDescriptor<Device>(
-            predicate: #Predicate { $0.ipAddress == ip }
-        )
-        if let existing = (try? context.fetch(request))?.first {
-            existing.macAddress = device.mac ?? existing.macAddress
-            existing.hostname = device.hostname ?? existing.hostname
-            existing.vendor = device.vendor ?? existing.vendor
+        let mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasValidMAC = ARPTableService.isValidMAC(mac)
+
+        var targetDevice: Device?
+
+        if hasValidMAC, let mac {
+            let allDevices = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+            targetDevice = allDevices.first(where: {
+                guard let existingMAC = $0.macAddress else { return false }
+                return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
+            })
+        }
+
+        if targetDevice == nil {
+            let ip = device.ip
+            let request = FetchDescriptor<Device>(
+                predicate: #Predicate { $0.ipAddress == ip }
+            )
+            targetDevice = (try? context.fetch(request))?.first
+        }
+
+        if let existing = targetDevice {
+            existing.ipAddress = device.ip
+            if hasValidMAC, let mac {
+                existing.macAddress = mac
+            }
+            if let hostname = device.hostname, !hostname.isEmpty {
+                existing.hostname = hostname
+            }
+            if let vendor = device.vendor, !vendor.isEmpty {
+                existing.vendor = vendor
+            }
             existing.lastSeen = device.lastSeen
             existing.isOnline = device.isOnline
         } else {
             context.insert(
                 Device(
                     ipAddress: device.ip,
-                    macAddress: device.mac,
+                    macAddress: hasValidMAC ? mac : device.mac,
                     hostname: device.hostname,
                     vendor: device.vendor,
                     firstSeen: device.firstSeen,

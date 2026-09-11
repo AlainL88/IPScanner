@@ -28,6 +28,7 @@ final class ScanViewModel {
     var networkName = String(localized: "Local network")
 
     private var knownIPsBeforeScan: Set<String> = []
+    private var knownMACsBeforeScan: Set<String> = []
 
     init(context: ModelContext, appState: AppState) {
         self.context = context
@@ -80,7 +81,12 @@ final class ScanViewModel {
         isScanning = true
         errorMessage = nil
         devices = []
-        knownIPsBeforeScan = Set((try? context.fetch(FetchDescriptor<Device>()))?.map(\.ipAddress) ?? [])
+        let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+        knownIPsBeforeScan = Set(allPersisted.map(\.ipAddress))
+        knownMACsBeforeScan = Set(allPersisted.compactMap { dev -> String? in
+            guard let mac = dev.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
+            return mac.uppercased()
+        })
 
         scanTask = Task {
             await runScan(cidr: cidr)
@@ -92,6 +98,15 @@ final class ScanViewModel {
         scanTask = nil
         isScanning = false
         phase = .idle
+    }
+
+    private func isDeviceNew(_ device: ScannedDevice) -> Bool {
+        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+            if knownMACsBeforeScan.contains(mac.uppercased()) {
+                return false
+            }
+        }
+        return !knownIPsBeforeScan.contains(device.ip)
     }
 
     private func targetCIDR() -> String? {
@@ -119,11 +134,45 @@ final class ScanViewModel {
             switch event {
             case .phase(let newPhase):
                 phase = newPhase
-            case .device(let device):
-                var device = device
-                device.isNew = !knownIPsBeforeScan.contains(device.ip)
-                devices.append(device)
-                responders.append(device)
+            case .device(let incoming):
+                var device = incoming
+                device.isNew = isDeviceNew(device)
+
+                if let index = devices.firstIndex(where: { $0.ip == device.ip }) {
+                    let old = devices[index]
+                    let merged = ScannedDevice(
+                        id: device.id,
+                        ip: device.ip,
+                        mac: device.mac ?? old.mac,
+                        hostname: device.hostname ?? old.hostname,
+                        vendor: device.vendor ?? old.vendor,
+                        firstSeen: old.firstSeen,
+                        lastSeen: device.lastSeen,
+                        isOnline: device.isOnline,
+                        isNew: old.isNew
+                    )
+                    devices[index] = merged
+                } else {
+                    devices.append(device)
+                }
+
+                if let rIndex = responders.firstIndex(where: { $0.ip == device.ip }) {
+                    let old = responders[rIndex]
+                    let merged = ScannedDevice(
+                        id: device.id,
+                        ip: device.ip,
+                        mac: device.mac ?? old.mac,
+                        hostname: device.hostname ?? old.hostname,
+                        vendor: device.vendor ?? old.vendor,
+                        firstSeen: old.firstSeen,
+                        lastSeen: device.lastSeen,
+                        isOnline: device.isOnline,
+                        isNew: old.isNew
+                    )
+                    responders[rIndex] = merged
+                } else {
+                    responders.append(device)
+                }
             case .completed(let summary):
                 lastScanSummary = summary
             }

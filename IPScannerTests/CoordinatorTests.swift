@@ -31,4 +31,25 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertTrue(foundIPs.contains("127.0.0.1"))
         XCTAssertTrue(completed, "The scan must emit a completion event")
     }
+
+    func testScansAndEmitsDeviceEventsIncrementally() async {
+        let coordinator = NetworkScannerCoordinator()
+        let stream = await coordinator.scan(cidr: "127.0.0.1/32", includeBonjour: false)
+
+        var eventTypes: [String] = []
+        for await event in stream {
+            switch event {
+            case .phase(let phase):
+                eventTypes.append("phase_\(phase)")
+            case .device(let device):
+                eventTypes.append("device_\(device.ip)")
+            case .completed:
+                eventTypes.append("completed")
+            }
+        }
+
+        XCTAssertTrue(eventTypes.contains(where: { $0.hasPrefix("phase_pinging") }))
+        XCTAssertTrue(eventTypes.contains("device_127.0.0.1"))
+        XCTAssertEqual(eventTypes.last, "completed")
+    }
 }

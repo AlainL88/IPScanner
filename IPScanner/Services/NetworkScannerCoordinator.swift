@@ -76,12 +76,13 @@ public struct ScanSummary: Sendable, Hashable {
 public actor NetworkScannerCoordinator {
     public init() {}
 
-    /// Scans a CIDR range and streams progress + discovered devices.
+    /// Scans a CIDR range and streams progress + discovered devices in real time.
     public func scan(cidr: String, includeBonjour: Bool = true) -> AsyncStream<ScanEvent> {
-        AsyncStream(bufferingPolicy: .bufferingNewest(32)) { continuation in
+        AsyncStream(bufferingPolicy: .unbounded) { continuation in
             let started = Date()
             let progress = ProgressCounter()
             let holder = TaskHolder()
+            let store = DiscoveredDevicesStore(started: started)
 
             continuation.yield(.phase(.subnetDetection))
 
@@ -97,61 +98,95 @@ public actor NetworkScannerCoordinator {
             continuation.yield(.phase(.pinging(completed: 0, total: total)))
 
             holder.task = Task {
-                let pingService = PingService(timeout: 1.2)
-                let pingResults = await pingService.pingSweep(addresses: addresses.map(\.description), concurrency: 32) { _ in
-                    // Live progress: the sweep reports each completion.
+                let targetAddressStrings = addresses.map(\.description)
+                let targetIPSet = Set(targetAddressStrings)
+                let oui = OUILookupService()
+                let pingService = PingService(timeout: 1.0)
+
+                // 1. Concurrent ICMP ping sweep with immediate streaming as IPs respond.
+                _ = await pingService.pingSweep(addresses: targetAddressStrings, concurrency: 48) { result in
                     let done = progress.increment()
                     continuation.yield(.phase(.pinging(completed: done, total: total)))
-                }
-                let responderIPs = pingResults.filter(\.succeeded).map(\.address)
 
-                // ARP cache gives MAC addresses for hosts that answered. On iOS
-                // the sysctl only exposes placeholder link-layer info (platform
-                // limitation), so MACs may be absent there — handled gracefully.
+                    if result.succeeded {
+                        let ip = result.address
+                        let mac = ARPTableService.macAddress(for: ip)
+                        let initialDevice = store.update(ip: ip, mac: mac)
+                        continuation.yield(.device(initialDevice))
+
+                        if let mac, ARPTableService.isValidMAC(mac) {
+                            Task {
+                                if let vendor = await oui.vendorName(forMAC: mac) {
+                                    let enriched = store.update(ip: ip, mac: mac, vendor: vendor)
+                                    continuation.yield(.device(enriched))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                guard !Task.isCancelled else {
+                    continuation.finish()
+                    return
+                }
+
+                // 2. ARP Table check:
+                // Many devices (Windows firewalls, IoT devices, printers) DROP ICMP ping,
+                // but answer Layer-2 ARP requests sent during the sweep.
+                // Any device with a valid MAC in the ARP table is online on the local link.
                 continuation.yield(.phase(.arpReading))
                 let arpEntries = ARPTableService.read()
-                let macByIP = Dictionary(
-                    arpEntries.compactMap { entry in entry.macAddress.map { (entry.ipAddress, $0) } },
-                    uniquingKeysWith: { a, _ in a }
-                )
+                for entry in arpEntries {
+                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { continue }
+                    if targetIPSet.contains(entry.ipAddress) {
+                        let vendor = await oui.vendorName(forMAC: mac)
+                        let device = store.update(ip: entry.ipAddress, mac: mac, vendor: vendor)
+                        continuation.yield(.device(device))
+                    }
+                }
 
-                // Bonjour gives friendly hostnames (best-effort).
-                var hostnameByIP: [String: String] = [:]
-                if includeBonjour, !responderIPs.isEmpty {
+                guard !Task.isCancelled else {
+                    continuation.finish()
+                    return
+                }
+
+                // 3. Bonjour / mDNS discovery:
+                // Resolves hostnames for detected devices and discovers mDNS-broadcasting hosts.
+                if includeBonjour {
                     continuation.yield(.phase(.bonjourDiscovery))
                     let bonjour = BonjourDiscoveryService()
-                    hostnameByIP = await bonjour.resolveHostnames(for: Set(responderIPs), duration: 2)
+                    let currentDevices = store.all()
+                    let knownIPs = Set(currentDevices.map(\.ip))
+                    let queryIPs = knownIPs.isEmpty ? targetIPSet : knownIPs
+
+                    let bonjourHostnames = await bonjour.resolveHostnames(for: queryIPs, duration: 2)
+                    for (ip, hostname) in bonjourHostnames {
+                        if targetIPSet.contains(ip) {
+                            let device = store.update(ip: ip, hostname: hostname)
+                            continuation.yield(.device(device))
+                        }
+                    }
+                }
+
+                guard !Task.isCancelled else {
+                    continuation.finish()
+                    return
+                }
+
+                // 4. Reverse DNS fallback for devices missing a hostname:
+                let discovered = store.all()
+                for device in discovered where device.hostname == nil || device.hostname?.isEmpty == true {
+                    if let reverseName = DNSResolver.reverseLookup(ip: device.ip) {
+                        let updated = store.update(ip: device.ip, hostname: reverseName)
+                        continuation.yield(.device(updated))
+                    }
                 }
 
                 continuation.yield(.phase(.finishing))
-                let oui = OUILookupService()
-                var devices: [ScannedDevice] = []
-                for ip in responderIPs {
-                    let mac = macByIP[ip]
-                    let vendor: String?
-                    if let mac {
-                        vendor = await oui.vendorName(forMAC: mac)
-                    } else {
-                        vendor = nil
-                    }
-                    let device = ScannedDevice(
-                        id: ip,
-                        ip: ip,
-                        mac: mac,
-                        hostname: hostnameByIP[ip],
-                        vendor: vendor,
-                        firstSeen: started,
-                        lastSeen: started,
-                        isOnline: true,
-                        isNew: false
-                    )
-                    devices.append(device)
-                    continuation.yield(.device(device))
-                }
 
                 continuation.yield(.completed(
                     summary: ScanSummary(
-                        totalResponded: devices.count,
+                        totalResponded: store.count,
                         duration: Date().timeIntervalSince(started),
                         started: started
                     )
@@ -163,6 +198,58 @@ public actor NetworkScannerCoordinator {
                 holder.task?.cancel()
             }
         }
+    }
+}
+
+/// Thread-safe accumulator for discovered scanned devices during a sweep.
+private final class DiscoveredDevicesStore: @unchecked Sendable {
+    private let lock = NSLock()
+    private var devices: [String: ScannedDevice] = [:]
+    private let started: Date
+
+    init(started: Date) {
+        self.started = started
+    }
+
+    func update(
+        ip: String,
+        mac: String? = nil,
+        hostname: String? = nil,
+        vendor: String? = nil
+    ) -> ScannedDevice {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let existing = devices[ip]
+        let finalMAC = (mac != nil && ARPTableService.isValidMAC(mac)) ? mac : (existing?.mac)
+        let finalHostname = (hostname != nil && !hostname!.isEmpty) ? hostname : (existing?.hostname)
+        let finalVendor = (vendor != nil && !vendor!.isEmpty) ? vendor : (existing?.vendor)
+
+        let device = ScannedDevice(
+            id: ip,
+            ip: ip,
+            mac: finalMAC,
+            hostname: finalHostname,
+            vendor: finalVendor,
+            firstSeen: existing?.firstSeen ?? started,
+            lastSeen: started,
+            isOnline: true,
+            isNew: false
+        )
+        devices[ip] = device
+        return device
+    }
+
+    func all() -> [ScannedDevice] {
+        lock.lock()
+        defer { lock.unlock() }
+        return Array(devices.values)
+    }
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return devices.count
     }
 }
 

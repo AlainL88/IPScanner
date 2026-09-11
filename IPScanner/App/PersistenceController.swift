@@ -52,12 +52,17 @@ enum PersistenceController {
 
     /// In-memory container for SwiftUI previews and tests.
     static let previewContainer: ModelContainer = {
+        makeInMemoryContainer()
+    }()
+
+    /// Creates a fresh in-memory container for isolated tests.
+    static func makeInMemoryContainer() -> ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try! ModelContainer(
             for: Schema([Device.self, CustomNetworkRange.self, ScanSession.self]),
             configurations: [config]
         )
-    }()
+    }
 
     /// True when iCloud is actually usable from this process: the app carries
     /// the entitlement AND the user is signed in. `ubiquityIdentityToken` is nil

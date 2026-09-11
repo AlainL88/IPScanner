@@ -316,14 +316,60 @@ struct DeviceDetailView: View {
 
     private func loadPersistedDevice() {
         let ip = device.ip
-        let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
-        persistedDevice = (try? context.fetch(request))?.first
+        let mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasValidMAC = ARPTableService.isValidMAC(mac)
+
+        if hasValidMAC, let mac {
+            let allDevices = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+            persistedDevice = allDevices.first(where: {
+                guard let existingMAC = $0.macAddress else { return false }
+                return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
+            })
+        }
+
+        if persistedDevice == nil {
+            let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
+            persistedDevice = (try? context.fetch(request))?.first
+        }
+
+        if persistedDevice == nil {
+            let newDevice = Device(
+                ipAddress: device.ip,
+                macAddress: hasValidMAC ? mac : device.mac,
+                hostname: device.hostname,
+                vendor: device.vendor,
+                firstSeen: device.firstSeen,
+                lastSeen: device.lastSeen,
+                isOnline: device.isOnline
+            )
+            context.insert(newDevice)
+            try? context.save()
+            persistedDevice = newDevice
+        } else if let persisted = persistedDevice {
+            if persisted.ipAddress != device.ip {
+                persisted.ipAddress = device.ip
+            }
+            if hasValidMAC, let mac {
+                persisted.macAddress = mac
+            }
+            if let hostname = device.hostname, !hostname.isEmpty, persisted.hostname == nil {
+                persisted.hostname = hostname
+            }
+            if let vendor = device.vendor, !vendor.isEmpty, persisted.vendor == nil {
+                persisted.vendor = vendor
+            }
+            try? context.save()
+        }
+
         customName = persistedDevice?.customName ?? ""
     }
 
     /// Persists the inline name field. An empty (or whitespace-only) value clears
     /// the custom name and falls back to hostname/IP.
     private func saveCustomName() {
+        if persistedDevice == nil {
+            loadPersistedDevice()
+        }
         let trimmed = customName.trimmingCharacters(in: .whitespacesAndNewlines)
         persistedDevice?.customName = trimmed.isEmpty ? nil : trimmed
         try? context.save()

@@ -38,4 +38,15 @@ final class SubnetServiceTests: XCTestCase {
         XCTAssertTrue(iface.cidr.contains("/"))
     }
     #endif
+
+    func testDNSResolverLoopback() {
+        // Reverse lookup on 127.0.0.1 typically returns localhost or similar
+        let result = DNSResolver.reverseLookup(ip: "127.0.0.1")
+        if let result {
+            XCTAssertFalse(result.isEmpty)
+            XCTAssertNotEqual(result, "127.0.0.1")
+        }
+        // Malformed IP should return nil
+        XCTAssertNil(DNSResolver.reverseLookup(ip: "999.999.999.999"))
+    }
 }

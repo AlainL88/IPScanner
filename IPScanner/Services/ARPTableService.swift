@@ -104,12 +104,21 @@ public enum ARPTableService {
     /// Placeholder link-layer addresses used by virtual/tunnel interfaces.
     /// They carry no vendor information and would only confuse the UI.
     public static func isPlaceholderMAC(_ mac: String) -> Bool {
-        switch mac {
+        let normalized = mac.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        switch normalized {
         case "00:00:00:00:00:00", "02:00:00:00:00:00", "FF:FF:FF:FF:FF:FF":
             return true
         default:
             return false
         }
+    }
+
+    /// Checks whether a MAC address is valid (non-nil, non-empty, and not a placeholder).
+    public static func isValidMAC(_ mac: String?) -> Bool {
+        guard let mac = mac?.trimmingCharacters(in: .whitespacesAndNewlines), !mac.isEmpty else {
+            return false
+        }
+        return !isPlaceholderMAC(mac)
     }
 
     // MARK: - Parsing
