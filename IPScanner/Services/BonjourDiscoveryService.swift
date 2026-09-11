@@ -14,124 +14,140 @@ import Network
 public actor BonjourDiscoveryService {
     /// Service types most likely to be advertised by home/lab devices.
     private static let commonServiceTypes = [
-        "_http._tcp", "_https._tcp", "_ssh._tcp", "_smb._tcp", "_rfb._tcp",
-        "_airplay._tcp", "_airtunes._tcp", "_ipp._tcp", "_printer._tcp",
-        "_companion-link._tcp", "_spotify-connect._tcp", "_hap._tcp"
+        "_http._tcp", "_https._tcp", "_ssh._tcp", "_sftp-ssh._tcp", "_smb._tcp",
+        "_afpovertcp._tcp", "_rfb._tcp", "_airplay._tcp", "_raop._tcp", "_airtunes._tcp",
+        "_ipp._tcp", "_ipps._tcp", "_printer._tcp", "_scanner._tcp",
+        "_companion-link._tcp", "_apple-mobdev2._tcp", "_device-info._tcp",
+        "_hap._tcp", "_home-assistant._tcp", "_shelly._tcp", "_sonos._tcp",
+        "_spotify-connect._tcp", "_googlecast._tcp", "_workstation._tcp", "_matter._tcp"
     ]
 
     public init() {}
 
     /// Resolves hostnames for a set of IPv4 addresses via mDNS. Returns
     /// `[ip: hostname]` for whichever addresses could be mapped within `duration`.
-    public func resolveHostnames(for addresses: Set<String>, duration: TimeInterval = 3) async -> [String: String] {
-        var remaining = addresses
-        guard !remaining.isEmpty else { return [:] }
+    public func resolveHostnames(for addresses: Set<String>, duration: TimeInterval = 2.5) async -> [String: String] {
+        guard !addresses.isEmpty else { return [:] }
 
-        let endpoints = await browseEndpoints(duration: duration)
+        let discovered = await browseEndpoints(duration: duration)
+        guard !discovered.isEmpty else { return [:] }
+
         var result: [String: String] = [:]
 
-        for endpoint in endpoints {
-            guard !remaining.isEmpty else { break }
-            let resolved = await resolve(endpoint: endpoint)
-            if let hostname = resolved.hostname,
-               let ip = resolved.ip,
-               !hostname.isEmpty,
-               remaining.contains(ip) {
-                result[ip] = hostname
-                remaining.remove(ip)
+        await withTaskGroup(of: (ip: String, hostname: String)?.self) { group in
+            for item in discovered {
+                group.addTask {
+                    guard let ip = await self.resolveIP(for: item.endpoint) else { return nil }
+                    let cleanName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !cleanName.isEmpty else { return nil }
+                    return (ip, cleanName)
+                }
+            }
+
+            for await mapping in group {
+                if let (ip, hostname) = mapping, addresses.contains(ip) {
+                    if result[ip] == nil {
+                        result[ip] = hostname
+                    }
+                }
             }
         }
+
         return result
     }
 
     // MARK: - Private
 
-    private func browseEndpoints(duration: TimeInterval) async -> [NWEndpoint] {
-        let accumulator = EndpointAccumulator()
+    private func browseEndpoints(duration: TimeInterval) async -> [(name: String, endpoint: NWEndpoint)] {
+        let accumulator = DiscoveredItemAccumulator()
         var browsers: [NWBrowser] = []
 
         for type in Self.commonServiceTypes {
             let browser = NWBrowser(for: .bonjour(type: type, domain: nil), using: .init())
             browsers.append(browser)
             browser.browseResultsChangedHandler = { results, _ in
-                accumulator.append(results.map(\.endpoint))
+                var items: [(name: String, endpoint: NWEndpoint)] = []
+                for result in results {
+                    if case .service(let name, _, _, _) = result.endpoint {
+                        items.append((name, result.endpoint))
+                    }
+                }
+                accumulator.append(items)
             }
             browser.start(queue: .global(qos: .userInitiated))
         }
 
         // Let the browsers accumulate results for the window, then stop them.
-        try? await Task.sleep(for: .seconds(duration))
+        try? await Task.sleep(for: .milliseconds(Int(duration * 1000)))
         for browser in browsers { browser.cancel() }
-        return accumulator.endpoints
+        return accumulator.items
     }
 
-    /// Resolves an mDNS service endpoint to (hostname, ip) with a bounded timeout.
-    private func resolve(endpoint: NWEndpoint) async -> (hostname: String?, ip: String?) {
-        let connection = NWConnection(to: endpoint, using: .tcp)
+    /// Resolves an mDNS service endpoint to an IPv4 string without requiring TCP connection handshakes.
+    private func resolveIP(for endpoint: NWEndpoint) async -> String? {
+        let connection = NWConnection(to: endpoint, using: .udp)
         let resumeOnce = ResumeOnce()
 
-        return await withCheckedContinuation { (continuation: CheckedContinuation<(String?, String?), Never>) in
+        return await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    let (hostname, ip) = Self.extractHostPort(connection.currentPath?.remoteEndpoint)
+                    let ip = Self.extractIPv4(connection.currentPath?.remoteEndpoint)
                     resumeOnce.run {
-                        continuation.resume(returning: (hostname, ip))
                         connection.cancel()
+                        continuation.resume(returning: ip)
                     }
-                case .failed:
+                case .failed, .cancelled:
                     resumeOnce.run {
-                        continuation.resume(returning: (nil, nil))
                         connection.cancel()
+                        continuation.resume(returning: nil)
                     }
-                case .cancelled:
-                    resumeOnce.run { continuation.resume(returning: (nil, nil)) }
                 default:
                     break
                 }
             }
             connection.start(queue: .global(qos: .userInitiated))
 
-            DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
                 resumeOnce.run {
                     connection.cancel()
-                    continuation.resume(returning: (nil, nil))
+                    continuation.resume(returning: nil)
                 }
             }
         }
     }
 
-    /// Extracts (hostname, ip) from a resolved `.hostPort` endpoint.
-    private static func extractHostPort(_ endpoint: NWEndpoint?) -> (hostname: String?, ip: String?) {
-        guard let endpoint else { return (nil, nil) }
-        guard case .hostPort(let host, _) = endpoint else { return (nil, nil) }
+    /// Extracts IPv4 address string from remote endpoint, stripping any interface scope (e.g. %en0).
+    private static func extractIPv4(_ endpoint: NWEndpoint?) -> String? {
+        guard let endpoint else { return nil }
+        guard case .hostPort(let host, _) = endpoint else { return nil }
         switch host {
-        case .name(let name, _):
-            // A hostname that is actually an IP literal (e.g. "192.168.1.5").
-            let isIPLiteral = Network.IPv4Address(name) != nil
-            return (name, isIPLiteral ? name : nil)
         case .ipv4(let address):
-            return (nil, "\(address)")
-        case .ipv6(let address):
-            return (nil, "\(address)")
-        @unknown default:
-            return (nil, nil)
+            let raw = "\(address)"
+            return raw.components(separatedBy: "%").first
+        case .name(let name, _):
+            if IPv4Address(string: name) != nil {
+                return name
+            }
+            return nil
+        default:
+            return nil
         }
     }
 }
 
-/// Thread-safe bucket for NWBrowser results.
-private final class EndpointAccumulator: @unchecked Sendable {
+/// Thread-safe bucket for discovered Bonjour service items.
+private final class DiscoveredItemAccumulator: @unchecked Sendable {
     private let lock = NSLock()
-    private var storage: [NWEndpoint] = []
+    private var storage: [(name: String, endpoint: NWEndpoint)] = []
 
-    func append(_ endpoints: [NWEndpoint]) {
+    func append(_ items: [(name: String, endpoint: NWEndpoint)]) {
         lock.lock()
-        storage.append(contentsOf: endpoints)
+        storage.append(contentsOf: items)
         lock.unlock()
     }
 
-    var endpoints: [NWEndpoint] {
+    var items: [(name: String, endpoint: NWEndpoint)] {
         lock.lock()
         defer { lock.unlock() }
         return storage

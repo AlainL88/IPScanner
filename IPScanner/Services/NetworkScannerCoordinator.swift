@@ -173,12 +173,25 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 4. Reverse DNS fallback for devices missing a hostname:
+                // 4. Reverse DNS fallback for devices missing a hostname (concurrent):
                 let discovered = store.all()
-                for device in discovered where device.hostname == nil || device.hostname?.isEmpty == true {
-                    if let reverseName = DNSResolver.reverseLookup(ip: device.ip) {
-                        let updated = store.update(ip: device.ip, hostname: reverseName)
-                        continuation.yield(.device(updated))
+                let missingHostnameIPs = discovered.filter { $0.hostname == nil || $0.hostname?.isEmpty == true }.map(\.ip)
+                if !missingHostnameIPs.isEmpty {
+                    await withTaskGroup(of: (ip: String, hostname: String)?.self) { group in
+                        for ip in missingHostnameIPs {
+                            group.addTask {
+                                if let reverseName = DNSResolver.reverseLookup(ip: ip) {
+                                    return (ip, reverseName)
+                                }
+                                return nil
+                            }
+                        }
+                        for await result in group {
+                            if let (ip, reverseName) = result {
+                                let updated = store.update(ip: ip, hostname: reverseName)
+                                continuation.yield(.device(updated))
+                            }
+                        }
                     }
                 }
 

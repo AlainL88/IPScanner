@@ -34,7 +34,26 @@ public enum DNSResolver {
             NI_NAMEREQD
         )
         guard result == 0 else { return nil }
-        let hostname = String(cString: hostBuffer).trimmingCharacters(in: .whitespacesAndNewlines)
-        return (!hostname.isEmpty && hostname != ip) ? hostname : nil
+        let rawHostname = String(cString: hostBuffer).trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleanHostname(rawHostname)
+    }
+
+    /// Cleans a resolved hostname by trimming whitespaces, removing trailing dots,
+    /// stripping ".local" suffixes for display if present, and discarding IP literals.
+    public static func cleanHostname(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        while name.hasSuffix(".") {
+            name.removeLast()
+        }
+        if name.lowercased().hasSuffix(".local") {
+            name = String(name.dropLast(6))
+        }
+        guard !name.isEmpty else { return nil }
+        // If it is an IPv4 literal, discard it
+        if IPv4Address(string: name) != nil {
+            return nil
+        }
+        return name
     }
 }

@@ -21,6 +21,7 @@ final class ScanViewModel {
     private var scanTask: Task<Void, Never>?
 
     var devices: [ScannedDevice] = []
+    var searchText: String = ""
     var phase: ScanPhase = .idle
     var isScanning = false
     var errorMessage: String?
@@ -42,6 +43,51 @@ final class ScanViewModel {
         if appState.showOnlyNew {
             result = result.filter(\.isNew)
         }
+
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !query.isEmpty {
+            let lowerQuery = query.lowercased()
+            let cleanHexQuery = lowerQuery.replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "-", with: "")
+            let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+
+            result = result.filter { device in
+                // 1. IP match
+                if device.ip.localizedCaseInsensitiveContains(query) {
+                    return true
+                }
+                // 2. MAC match (formatted or stripped hex)
+                if let mac = device.mac {
+                    if mac.localizedCaseInsensitiveContains(query) {
+                        return true
+                    }
+                    let cleanMac = mac.lowercased().replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "-", with: "")
+                    if !cleanHexQuery.isEmpty && cleanMac.contains(cleanHexQuery) {
+                        return true
+                    }
+                }
+                // 3. Hostname match
+                if let hostname = device.hostname, hostname.localizedCaseInsensitiveContains(query) {
+                    return true
+                }
+                // 4. Vendor match
+                if let vendor = device.vendor, vendor.localizedCaseInsensitiveContains(query) {
+                    return true
+                }
+                // 5. Custom name match from persisted Device
+                if let matchedPersisted = allPersisted.first(where: {
+                    if let mac = device.mac, let persistedMAC = $0.macAddress, ARPTableService.isValidMAC(mac) {
+                        return persistedMAC.caseInsensitiveCompare(mac) == .orderedSame
+                    }
+                    return $0.ipAddress == device.ip
+                }) {
+                    if let customName = matchedPersisted.customName, customName.localizedCaseInsensitiveContains(query) {
+                        return true
+                    }
+                }
+                return false
+            }
+        }
+
         switch appState.sortKey {
         case .name:
             result.sort { (lhs, rhs) in

@@ -32,9 +32,13 @@ struct ScanListView: View {
     }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         Group {
             if viewModel.devices.isEmpty && !viewModel.isScanning {
                 EmptyStateView(startScan: viewModel.startScan)
+            } else if viewModel.filteredDevices.isEmpty && !viewModel.searchText.isEmpty {
+                ContentUnavailableView.search(text: viewModel.searchText)
             } else {
                 List {
                     if viewModel.isScanning {
@@ -59,6 +63,10 @@ struct ScanListView: View {
                 .listStyle(.inset)
             }
         }
+        .searchable(
+            text: $viewModel.searchText,
+            prompt: Text(String(localized: "Search by IP, MAC, hostname, name..."))
+        )
         .navigationTitle(title)
         .toolbar { toolbarContent }
         .overlay(alignment: .bottom) {

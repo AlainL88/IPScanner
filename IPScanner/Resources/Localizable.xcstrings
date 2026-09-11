@@ -1201,6 +1201,22 @@
         }
       }
     },
+    "Search by IP, MAC, hostname, name...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search by IP, MAC, hostname, name..."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca per IP, MAC, hostname, nome..."
+          }
+        }
+      }
+    },
     "Select a network to scan": {
       "localizations": {
         "en": {
