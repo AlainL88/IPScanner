@@ -108,6 +108,7 @@ struct DeviceDetailView: View {
             Divider()
             infoRow(label: String(localized: "Last seen"), value: formatted(device.lastSeen))
         }
+        .textSelection(.enabled)
         .padding(.horizontal, Theme.spacing)
         .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.cornerRadius))
     }
@@ -119,9 +120,19 @@ struct DeviceDetailView: View {
             Spacer()
             Text(value)
                 .multilineTextAlignment(.trailing)
+                .textSelection(.enabled)
         }
         .font(.subheadline)
         .padding(.vertical, 8)
+        .contextMenu {
+            if value != "—" {
+                Button {
+                    copyToClipboard(value)
+                } label: {
+                    Label(String(localized: "Copy"), systemImage: "doc.on.doc")
+                }
+            }
+        }
     }
 
     /// MAC row with an info button when the address is unavailable (iOS exposes
@@ -134,9 +145,11 @@ struct DeviceDetailView: View {
             if let mac = device.mac, !mac.isEmpty {
                 Text(mac)
                     .multilineTextAlignment(.trailing)
+                    .textSelection(.enabled)
             } else {
                 Text(String(localized: "N/A"))
                     .multilineTextAlignment(.trailing)
+                    .textSelection(.enabled)
                 Button {
                     showingMACInfo = true
                 } label: {
@@ -149,6 +162,15 @@ struct DeviceDetailView: View {
         }
         .font(.subheadline)
         .padding(.vertical, 8)
+        .contextMenu {
+            if let mac = device.mac, !mac.isEmpty {
+                Button {
+                    copyToClipboard(mac)
+                } label: {
+                    Label(String(localized: "Copy"), systemImage: "doc.on.doc")
+                }
+            }
+        }
     }
 
     // MARK: - Metadata
@@ -488,5 +510,14 @@ struct DeviceDetailView: View {
                 isPortScanning = false
             }
         }
+    }
+
+    private func copyToClipboard(_ text: String) {
+        #if os(iOS)
+        UIPasteboard.general.string = text
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
     }
 }
