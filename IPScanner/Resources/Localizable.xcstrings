@@ -1,7 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "": {},
     "%@ (%@) stopped responding.": {
       "localizations": {
         "en": {
@@ -50,23 +49,6 @@
         }
       }
     },
-    "%lld open ports": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld open ports"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld porte aperte"
-          }
-        }
-      }
-    },
     "About": {
       "localizations": {
         "en": {
@@ -111,40 +93,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aggiungi rete"
-          }
-        }
-      }
-    },
-    "Add range": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add range"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aggiungi intervallo"
-          }
-        }
-      }
-    },
-    "All devices": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "All devices"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tutti i dispositivi"
           }
         }
       }
@@ -229,6 +177,22 @@
         }
       }
     },
+    "CIDR": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CIDR"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CIDR"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "en": {
@@ -257,22 +221,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scegli icona"
-          }
-        }
-      }
-    },
-    "CIDR": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CIDR"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CIDR"
           }
         }
       }
@@ -357,6 +305,22 @@
         }
       }
     },
+    "Contact support": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contact support"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contatta il supporto"
+          }
+        }
+      }
+    },
     "Crash reporting": {
       "localizations": {
         "en": {
@@ -400,24 +364,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Crashlytics attivo"
-          }
-        }
-      }
-    },
-    "Cumulative mode": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cumulative mode"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modalità cumulativa"
+            "value": "Crashlytics attivato"
           }
         }
       }
@@ -513,7 +460,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ricerca servizi…"
+            "value": "Ricerca servizi in corso…"
           }
         }
       }
@@ -530,23 +477,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fine"
-          }
-        }
-      }
-    },
-    "Edit": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Modifica"
           }
         }
       }
@@ -599,23 +529,6 @@
         }
       }
     },
-    "Finishing…": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finishing…"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Completamento…"
-          }
-        }
-      }
-    },
     "First seen": {
       "localizations": {
         "en": {
@@ -627,24 +540,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prima volta visto"
-          }
-        }
-      }
-    },
-    "History": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "History"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cronologia"
+            "value": "Primo rilevamento"
           }
         }
       }
@@ -661,39 +557,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nome host"
-          }
-        }
-      }
-    },
-    "Import": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importa"
-          }
-        }
-      }
-    },
-    "Invalid network range": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invalid network range"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Intervallo di rete non valido"
           }
         }
       }
@@ -730,7 +593,22 @@
         }
       }
     },
-    "IPScanner": {},
+    "Invalid network range": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid network range"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intervallo di rete non valido"
+          }
+        }
+      }
+    },
     "Last seen": {
       "localizations": {
         "en": {
@@ -742,7 +620,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ultimo visto"
+            "value": "Ultimo rilevamento"
           }
         }
       }
@@ -791,6 +669,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Indirizzo MAC"
+          }
+        }
+      }
+    },
+    "N/A": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N/A"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "N/D"
           }
         }
       }
@@ -891,23 +785,6 @@
         }
       }
     },
-    "No peers found": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No peers found"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nessun dispositivo trovato"
-          }
-        }
-      }
-    },
     "No previous scans": {
       "localizations": {
         "en": {
@@ -924,23 +801,6 @@
         }
       }
     },
-    "No scan results to share": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No scan results to share"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nessun risultato da condividere"
-          }
-        }
-      }
-    },
     "Notifications": {
       "localizations": {
         "en": {
@@ -953,6 +813,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notifiche"
+          }
+        }
+      }
+    },
+    "OK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
@@ -984,7 +860,23 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Su iOS le scansioni in background sono best-effort e possono essere ritardate dal sistema."
+            "value": "Su iOS le scansioni in background sono basate sul best-effort e potrebbero subire ritardi dal sistema."
+          }
+        }
+      }
+    },
+    "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Su iOS il sistema non espone gli indirizzi MAC dei dispositivi vicini (la tabella ARP è limitata). Questa informazione è disponibile su macOS."
           }
         }
       }
@@ -1005,6 +897,22 @@
         }
       }
     },
+    "Open VNC": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open VNC"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri VNC"
+          }
+        }
+      }
+    },
     "Open in browser": {
       "localizations": {
         "en": {
@@ -1021,39 +929,6 @@
         }
       }
     },
-    "Open VNC": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open VNC"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apri in VNC"
-          }
-        }
-      }
-    },
-    "Peer transfer": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Peer transfer"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trasferimento peer-to-peer"
-          }
-        }
-      }
-    },
     "Ping": {
       "localizations": {
         "en": {
@@ -1066,23 +941,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ping"
-          }
-        }
-      }
-    },
-    "Please connect to a network to scan.": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Please connect to a network to scan."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Connettiti a una rete per eseguire la scansione."
           }
         }
       }
@@ -1130,7 +988,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparazione…"
+            "value": "Preparazione in corso…"
           }
         }
       }
@@ -1162,58 +1020,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lettura cache ARP…"
-          }
-        }
-      }
-    },
-    "Receive": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Receive"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ricevi"
-          }
-        }
-      }
-    },
-    "Recently offline": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recently offline"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Offline di recente"
-          }
-        }
-      }
-    },
-    "Rename": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rename"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rinomina"
+            "value": "Lettura tabella ARP in corso…"
           }
         }
       }
@@ -1234,23 +1041,6 @@
         }
       }
     },
-    "Retry": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Riprova"
-          }
-        }
-      }
-    },
     "Row size": {
       "localizations": {
         "en": {
@@ -1262,25 +1052,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dimensione righe"
-          }
-        }
-      }
-    },
-    "RTT": {},
-    "Save": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Salva"
+            "value": "Dimensione riga"
           }
         }
       }
@@ -1333,23 +1105,6 @@
         }
       }
     },
-    "Scanning %@": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scanning %@"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Scansione %@"
-          }
-        }
-      }
-    },
     "Scanning…": {
       "localizations": {
         "en": {
@@ -1362,23 +1117,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scansione in corso…"
-          }
-        }
-      }
-    },
-    "Select a device": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Select a device"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seleziona un dispositivo"
           }
         }
       }
@@ -1431,23 +1169,6 @@
         }
       }
     },
-    "Send to another device": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Send to another device"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invia a un altro dispositivo"
-          }
-        }
-      }
-    },
     "Settings": {
       "localizations": {
         "en": {
@@ -1460,40 +1181,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Impostazioni"
-          }
-        }
-      }
-    },
-    "Share": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Condividi"
-          }
-        }
-      }
-    },
-    "Show only new": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show only new"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mostra solo nuovi"
           }
         }
       }
@@ -1525,7 +1212,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ampia"
+            "value": "Spaziosa"
           }
         }
       }
@@ -1557,7 +1244,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Avvia la scansione per scoprire i dispositivi sulla tua rete locale."
+            "value": "Avvia la scansione per scoprire i dispositivi connessi alla tua rete locale."
           }
         }
       }
@@ -1595,7 +1282,6 @@
       }
     },
     "Test Crash": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1675,23 +1361,6 @@
         }
       }
     },
-    "Wake failed": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wake failed"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invio Wake fallito"
-          }
-        }
-      }
-    },
     "Wake on LAN": {
       "localizations": {
         "en": {
@@ -1740,39 +1409,6 @@
         }
       }
     },
-    "Whitelisted": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Whitelisted"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In whitelist"
-          }
-        }
-      }
-    },
-    "N/A": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "N/A"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "N/D"
-          }
-        }
-      }
-    },
     "Why is the MAC missing?": {
       "localizations": {
         "en": {
@@ -1785,38 +1421,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Perché manca il MAC?"
-          }
-        }
-      }
-    },
-    "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Su iOS il sistema non espone gli indirizzi MAC dei dispositivi vicini (la tabella ARP è limitata). Questa informazione è disponibile su macOS."
-          }
-        }
-      }
-    },
-    "OK": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
           }
         }
       }
