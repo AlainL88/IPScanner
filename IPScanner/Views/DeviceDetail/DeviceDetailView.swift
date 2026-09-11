@@ -22,6 +22,8 @@ struct DeviceDetailView: View {
     @State private var persistedDevice: Device?
     @State private var showingIconPicker = false
     @State private var pingResult: PingResult?
+    @State private var isPortScanning = false
+    @State private var openPorts: [OpenPort]?
     @State private var customName = ""
     @State private var showingMACInfo = false
     @FocusState private var nameFocused: Bool
@@ -35,6 +37,12 @@ struct DeviceDetailView: View {
                 actionButtons
                 if let pingResult {
                     pingResultView(pingResult)
+                }
+                if isPortScanning && openPorts == nil {
+                    portScanningProgressView
+                }
+                if let openPorts {
+                    portScanResultView(ports: openPorts)
                 }
             }
             .padding()
@@ -211,6 +219,9 @@ struct DeviceDetailView: View {
             actionButton(String(localized: "Ping"), systemImage: "point.3.connected.trianglepath.dotted") {
                 ping()
             }
+            actionButton(String(localized: "Scan ports"), systemImage: "network") {
+                scanPorts()
+            }
             actionButton(String(localized: "Wake on LAN"), systemImage: "bolt.fill") {
                 wake()
             }
@@ -258,6 +269,67 @@ struct DeviceDetailView: View {
         }
         .font(.subheadline)
         .padding(.vertical, 4)
+    }
+
+    // MARK: - Port scan results
+
+    private var portScanningProgressView: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+            Text(String(localized: "Scanning ports…"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Theme.spacing)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.cornerRadius))
+    }
+
+    private func portScanResultView(ports: [OpenPort]) -> some View {
+        VStack(alignment: .leading, spacing: Theme.spacing) {
+            HStack {
+                Text(String(localized: "Open ports"))
+                    .font(.headline)
+                Spacer()
+                if isPortScanning {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else {
+                    Text(ports.isEmpty ? String(localized: "All ports closed") : String(format: String(localized: "%lld open ports"), ports.count))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if !ports.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(ports, id: \.port) { port in
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.statusOnline)
+                                .font(.footnote)
+                            Text(String(format: String(localized: "Port %lld"), Int64(port.port)))
+                                .font(.subheadline.weight(.medium))
+                            Spacer()
+                            if let service = port.serviceName {
+                                Text(service.uppercased())
+                                    .font(.caption.weight(.semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .padding(.vertical, 6)
+                        if port != ports.last {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+        .padding(Theme.spacing)
+        .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.cornerRadius))
     }
 
     // MARK: - Sheets
@@ -399,6 +471,22 @@ struct DeviceDetailView: View {
         let service = WakeOnLANService()
         Task {
             try? await service.sendWake(mac: mac)
+        }
+    }
+
+    private func scanPorts() {
+        guard !isPortScanning else { return }
+        isPortScanning = true
+        openPorts = nil
+        let ip = device.ip
+        let config = PortScanConfiguration(ports: PortScanConfiguration.common)
+        Task {
+            let service = PortScanService()
+            let ports = await service.scan(host: ip, configuration: config) { _ in }
+            await MainActor.run {
+                openPorts = ports
+                isPortScanning = false
+            }
         }
     }
 }

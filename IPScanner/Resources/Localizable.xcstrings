@@ -49,6 +49,22 @@
         }
       }
     },
+    "%lld open ports": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld open ports"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld porte aperte"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "en": {
@@ -929,6 +945,22 @@
         }
       }
     },
+    "Open ports": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open ports"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porte aperte"
+          }
+        }
+      }
+    },
     "Ping": {
       "localizations": {
         "en": {
@@ -941,6 +973,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ping"
+          }
+        }
+      }
+    },
+    "Port %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port %lld"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Porta %lld"
           }
         }
       }
@@ -1101,6 +1149,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scansiona porte"
+          }
+        }
+      }
+    },
+    "Scanning ports…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning ports…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione porte in corso…"
           }
         }
       }
