@@ -16,7 +16,6 @@ struct ScanListView: View {
 
     let viewModel: ScanViewModel
     let target: NetworkTarget
-    @State private var showingTools = false
 
     /// Resolves the persisted Device record for a scanned device,
     /// prioritizing MAC address matching when available, then IP address.
@@ -77,10 +76,6 @@ struct ScanListView: View {
                 errorBanner(error)
             }
         }
-        .sheet(isPresented: $showingTools) {
-            let host = viewModel.devices.first?.ip ?? ""
-            ToolsView(initialHost: host, initialMAC: persistedMAC(for: host))
-        }
     }
 
     @ViewBuilder
@@ -101,15 +96,6 @@ struct ScanListView: View {
             .frame(maxWidth: .infinity)
             .background(.bar)
         }
-    }
-
-    private func persistedMAC(for ip: String) -> String? {
-        if let scanned = viewModel.devices.first(where: { $0.ip == ip }), let mac = scanned.mac, !mac.isEmpty {
-            return mac
-        }
-        let ip = ip
-        let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
-        return (try? context.fetch(request))?.first?.macAddress
     }
 
     private var title: String {
@@ -142,13 +128,6 @@ struct ScanListView: View {
         }
 
         ToolbarItemGroup {
-            Button {
-                showingTools = true
-            } label: {
-                Label(String(localized: "Tools"), systemImage: "wrench.and.screwdriver")
-            }
-            .accessibilityLabel(String(localized: "Tools"))
-
             Menu {
                 ForEach(SortKey.allCases) { key in
                     Button {

@@ -17,10 +17,10 @@ struct DeviceRowView: View {
     let columns: Set<DeviceColumn>
 
     var body: some View {
-        HStack(spacing: Theme.spacing) {
+        HStack(spacing: 14) {
             iconBadge
 
-            VStack(alignment: .leading, spacing: density == .compact ? 2 : 3) {
+            VStack(alignment: .leading, spacing: density == .compact ? 3 : 5) {
                 titleRow
                 subtitleContent
             }
@@ -39,9 +39,9 @@ struct DeviceRowView: View {
     // MARK: - Title
 
     private var titleRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Text(displayName)
-                .font(isDisplayNameAnIP ? .system(.body, design: .monospaced).weight(.semibold) : .body.weight(.semibold))
+                .font(.system(size: titleFontSize, weight: .semibold, design: isDisplayNameAnIP ? .monospaced : .default))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 
@@ -49,11 +49,27 @@ struct DeviceRowView: View {
                 Text(String(localized: "New"))
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
                     .background(Color.statusNew, in: Capsule())
                     .accessibilityLabel(String(localized: "New"))
             }
+        }
+    }
+
+    private var titleFontSize: CGFloat {
+        switch density {
+        case .compact: return 16
+        case .comfortable: return 17.5
+        case .spacious: return 19
+        }
+    }
+
+    private var subtitleFontSize: CGFloat {
+        switch density {
+        case .compact: return 13.5
+        case .comfortable: return 14
+        case .spacious: return 15
         }
     }
 
@@ -65,7 +81,7 @@ struct DeviceRowView: View {
         case .compact:
             let allItems = networkInfoItems + hardwareInfoItems
             if !allItems.isEmpty {
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     ForEach(Array(allItems.enumerated()), id: \.offset) { index, item in
                         if index > 0 {
                             bulletSeparator
@@ -79,8 +95,8 @@ struct DeviceRowView: View {
             let net = networkInfoItems
             let hw = hardwareInfoItems
             if !net.isEmpty && !hw.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 5) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
                         ForEach(Array(net.enumerated()), id: \.offset) { index, item in
                             if index > 0 { bulletSeparator }
                             itemLabel(item)
@@ -88,7 +104,7 @@ struct DeviceRowView: View {
                     }
                     .lineLimit(1)
 
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         ForEach(Array(hw.enumerated()), id: \.offset) { index, item in
                             if index > 0 { bulletSeparator }
                             itemLabel(item)
@@ -97,7 +113,7 @@ struct DeviceRowView: View {
                     .lineLimit(1)
                 }
             } else if !net.isEmpty {
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     ForEach(Array(net.enumerated()), id: \.offset) { index, item in
                         if index > 0 { bulletSeparator }
                         itemLabel(item)
@@ -105,7 +121,7 @@ struct DeviceRowView: View {
                 }
                 .lineLimit(1)
             } else if !hw.isEmpty {
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     ForEach(Array(hw.enumerated()), id: \.offset) { index, item in
                         if index > 0 { bulletSeparator }
                         itemLabel(item)
@@ -118,20 +134,20 @@ struct DeviceRowView: View {
 
     private var bulletSeparator: some View {
         Text("·")
-            .font(.caption.weight(.bold))
+            .font(.system(size: subtitleFontSize, weight: .bold))
             .foregroundStyle(.secondary.opacity(0.6))
     }
 
     @ViewBuilder
     private func itemLabel(_ item: SubtitleItem) -> some View {
-        HStack(spacing: 3) {
+        HStack(spacing: 4) {
             if let iconName = item.iconName {
                 Image(systemName: iconName)
-                    .font(.caption2)
+                    .font(.system(size: subtitleFontSize - 2))
                     .foregroundStyle(.secondary)
             }
             Text(item.text)
-                .font(item.isMonospaced ? .system(.caption, design: .monospaced) : .caption)
+                .font(.system(size: subtitleFontSize, weight: item.isMonospaced ? .medium : .regular, design: item.isMonospaced ? .monospaced : .default))
                 .foregroundStyle(.secondary)
         }
     }
@@ -187,17 +203,17 @@ struct DeviceRowView: View {
     private var iconBadge: some View {
         let size: CGFloat = {
             switch density {
-            case .compact: return 34
-            case .comfortable: return 42
-            case .spacious: return 48
+            case .compact: return 36
+            case .comfortable: return 44
+            case .spacious: return 50
             }
         }()
 
         let symbolSize: CGFloat = {
             switch density {
-            case .compact: return 16
-            case .comfortable: return 20
-            case .spacious: return 24
+            case .compact: return 18
+            case .comfortable: return 22
+            case .spacious: return 26
             }
         }()
 
@@ -213,12 +229,14 @@ struct DeviceRowView: View {
     }
 
     private var statusIndicator: some View {
-        ZStack {
-            Circle()
-                .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
-                .frame(width: 9, height: 9)
-        }
-        .accessibilityLabel(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
+        Circle()
+            .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
+            .frame(width: 10, height: 10)
+            .overlay(
+                Circle()
+                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+            )
+            .accessibilityLabel(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
     }
 }
 
