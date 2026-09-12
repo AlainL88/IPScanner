@@ -33,38 +33,50 @@ struct ScanListView: View {
     var body: some View {
         @Bindable var viewModel = viewModel
 
-        Group {
-            if viewModel.devices.isEmpty && !viewModel.isScanning {
-                EmptyStateView(startScan: viewModel.startScan)
-            } else if viewModel.filteredDevices.isEmpty && !viewModel.searchText.isEmpty {
-                ContentUnavailableView.search(text: viewModel.searchText)
-            } else {
-                List {
-                    if viewModel.isScanning {
-                        ScanProgressView(phase: viewModel.phase)
+        VStack(spacing: 0) {
+            if !viewModel.devices.isEmpty || viewModel.isScanning {
+                filterPicker
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 6)
+                Divider()
+            }
+
+            Group {
+                if viewModel.devices.isEmpty && !viewModel.isScanning && viewModel.filterMode != .availableOnly {
+                    EmptyStateView(startScan: viewModel.startScan)
+                } else if viewModel.filterMode == .availableOnly {
+                    if viewModel.filteredAvailableIPs.isEmpty && !viewModel.searchText.isEmpty {
+                        ContentUnavailableView.search(text: viewModel.searchText)
+                    } else if viewModel.availableIPs.isEmpty {
+                        ContentUnavailableView(
+                            String(localized: "No Free IPs"),
+                            systemImage: "network.slash",
+                            description: Text(String(localized: "All IP addresses in this subnet are occupied."))
+                        )
+                    } else {
+                        availableIPsList
                     }
-                    ForEach(viewModel.filteredDevices) { device in
-                        let persisted = persistedDevice(for: device)
-                        NavigationLink {
-                            DeviceDetailView(device: device, viewModel: viewModel)
-                        } label: {
-                            DeviceRowView(
-                                device: device,
-                                displayName: persisted?.customName ?? device.hostname ?? device.ip,
-                                icon: persisted?.customIcon ?? Device.inferredIcon(for: device.hostname, ip: device.ip),
-                                density: appState.rowDensity,
-                                columns: appState.visibleColumns
-                            )
-                        }
-                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                } else {
+                    if viewModel.filteredDevices.isEmpty && !viewModel.searchText.isEmpty {
+                        ContentUnavailableView.search(text: viewModel.searchText)
+                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .onlineOnly {
+                        ContentUnavailableView(
+                            String(localized: "No Online Devices"),
+                            systemImage: "wifi.slash",
+                            description: Text(String(localized: "No active devices currently online."))
+                        )
+                    } else {
+                        deviceList
                     }
                 }
-                .listStyle(.inset)
             }
         }
         .searchable(
             text: $viewModel.searchText,
-            prompt: Text(String(localized: "Search by IP, MAC, hostname, name..."))
+            prompt: Text(viewModel.filterMode == .availableOnly
+                ? String(localized: "Search by IP...")
+                : String(localized: "Search by IP, MAC, hostname, name..."))
         )
         .navigationTitle(title)
         .toolbar { toolbarContent }
@@ -78,15 +90,126 @@ struct ScanListView: View {
         }
     }
 
+    private var filterPicker: some View {
+        @Bindable var viewModel = viewModel
+        return Picker(String(localized: "Filter"), selection: $viewModel.filterMode) {
+            ForEach(DeviceListFilter.allCases) { filter in
+                Text(filter.label).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityLabel(String(localized: "Filter devices"))
+    }
+
+    private var deviceList: some View {
+        List {
+            if viewModel.isScanning {
+                ScanProgressView(phase: viewModel.phase)
+            }
+            ForEach(viewModel.filteredDevices) { device in
+                let persisted = persistedDevice(for: device)
+                NavigationLink {
+                    DeviceDetailView(device: device, viewModel: viewModel)
+                } label: {
+                    DeviceRowView(
+                        device: device,
+                        displayName: persisted?.customName ?? device.hostname ?? device.ip,
+                        icon: persisted?.customIcon ?? Device.inferredIcon(for: device.hostname, ip: device.ip),
+                        density: appState.rowDensity,
+                        columns: appState.visibleColumns
+                    )
+                }
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            }
+        }
+        .listStyle(.inset)
+    }
+
+    private var availableIPsList: some View {
+        List {
+            if viewModel.isScanning {
+                ScanProgressView(phase: viewModel.phase)
+            }
+            ForEach(viewModel.filteredAvailableIPs, id: \.self) { ip in
+                let dummyDevice = ScannedDevice(
+                    id: ip,
+                    ip: ip,
+                    mac: nil,
+                    hostname: nil,
+                    vendor: nil,
+                    firstSeen: Date(),
+                    lastSeen: Date(),
+                    isOnline: false,
+                    isNew: false
+                )
+                NavigationLink {
+                    DeviceDetailView(device: dummyDevice, viewModel: viewModel)
+                } label: {
+                    AvailableIPRowView(
+                        ip: ip,
+                        cidr: viewModel.currentCIDR,
+                        density: appState.rowDensity
+                    )
+                }
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .contextMenu {
+                    Button {
+                        #if os(iOS)
+                        UIPasteboard.general.string = ip
+                        #elseif os(macOS)
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(ip, forType: .string)
+                        #endif
+                    } label: {
+                        Label(String(localized: "Copy IP Address"), systemImage: "doc.on.doc")
+                    }
+
+                    NavigationLink {
+                        PingToolView(initialHost: ip)
+                    } label: {
+                        Label(String(localized: "Ping IP"), systemImage: "point.3.connected.trianglepath.dotted")
+                    }
+
+                    NavigationLink {
+                        PortScanToolView(initialHost: ip)
+                    } label: {
+                        Label(String(localized: "Port Scan"), systemImage: "network")
+                    }
+                }
+            }
+        }
+        .listStyle(.inset)
+    }
+
     @ViewBuilder
     private var statusBar: some View {
-        if !viewModel.devices.isEmpty {
+        if !viewModel.devices.isEmpty || viewModel.filterMode == .availableOnly {
             HStack {
-                if !viewModel.searchText.isEmpty {
-                    Text(String(format: String(localized: "%lld of %lld devices"), Int64(viewModel.filteredDevices.count), Int64(viewModel.devices.count)))
-                } else {
-                    let onlineCount = viewModel.devices.filter(\.isOnline).count
-                    Text(String(format: String(localized: "%lld devices (%lld online)"), Int64(viewModel.devices.count), Int64(onlineCount)))
+                switch viewModel.filterMode {
+                case .all:
+                    if !viewModel.searchText.isEmpty {
+                        Text(String(format: String(localized: "%lld of %lld devices"), Int64(viewModel.filteredDevices.count), Int64(viewModel.devices.count)))
+                    } else {
+                        let onlineCount = viewModel.devices.filter(\.isOnline).count
+                        Text(String(format: String(localized: "%lld devices (%lld online)"), Int64(viewModel.devices.count), Int64(onlineCount)))
+                    }
+                case .onlineOnly:
+                    let onlineDevices = viewModel.devices.filter(\.isOnline)
+                    if !viewModel.searchText.isEmpty {
+                        Text(String(format: String(localized: "%lld of %lld online devices"), Int64(viewModel.filteredDevices.count), Int64(onlineDevices.count)))
+                    } else {
+                        Text(String(format: String(localized: "%lld online devices"), Int64(onlineDevices.count)))
+                    }
+                case .availableOnly:
+                    let total = viewModel.totalSubnetHostsCount
+                    let freeCount = viewModel.availableIPs.count
+                    if !viewModel.searchText.isEmpty {
+                        Text(String(format: String(localized: "%lld of %lld free IPs"), Int64(viewModel.filteredAvailableIPs.count), Int64(freeCount)))
+                    } else if total > 0 {
+                        Text(String(format: String(localized: "%lld free IPs of %lld in subnet"), Int64(freeCount), Int64(total)))
+                    } else {
+                        Text(String(format: String(localized: "%lld free IPs"), Int64(freeCount)))
+                    }
                 }
             }
             .font(.footnote.weight(.medium))
@@ -197,11 +320,20 @@ struct ScanListView: View {
                     }
                 }
                 Button(String(localized: "Send by email")) {
+                    let data: Data
+                    let filename: String
+                    if viewModel.filterMode == .availableOnly {
+                        data = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: .csv)
+                        filename = "ipscanner-free-ips.\(selectedFormat.fileExtension)"
+                    } else {
+                        data = ExportService.data(for: viewModel.devices, format: .csv)
+                        filename = "ipscanner-scan.\(selectedFormat.fileExtension)"
+                    }
                     EmailService.compose(
                         subject: "IPScanner scan results",
                         body: "",
-                        attachmentName: "ipscanner-scan.\(selectedFormat.fileExtension)",
-                        attachmentData: ExportService.data(for: viewModel.devices, format: .csv),
+                        attachmentName: filename,
+                        attachmentData: data,
                         attachmentMime: ExportFormat.csv.mimeType
                     )
                 }
@@ -215,9 +347,17 @@ struct ScanListView: View {
     private var selectedFormat: ExportFormat { .csv }
 
     private func exportURL(_ format: ExportFormat) -> URL? {
-        let data = ExportService.data(for: viewModel.devices, format: format)
+        let data: Data
+        let filename: String
+        if viewModel.filterMode == .availableOnly {
+            data = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: format)
+            filename = "ipscanner-free-ips.\(format.fileExtension)"
+        } else {
+            data = ExportService.data(for: viewModel.devices, format: format)
+            filename = "ipscanner-scan.\(format.fileExtension)"
+        }
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ipscanner-scan.\(format.fileExtension)")
+            .appendingPathComponent(filename)
         do {
             try data.write(to: url)
             return url

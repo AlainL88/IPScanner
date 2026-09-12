@@ -12,6 +12,28 @@ import Observation
 
 /// Drives a single network scan: runs the coordinator, collects results,
 /// persists them, fires notifications and produces the sorted/filtered list the
+/// Filter mode for the scanned devices list.
+public enum DeviceListFilter: String, CaseIterable, Identifiable, Sendable {
+    case all
+    case onlineOnly
+    case availableOnly
+
+    public var id: String { rawValue }
+
+    public var label: String {
+        switch self {
+        case .all:
+            return String(localized: "All")
+        case .onlineOnly:
+            return String(localized: "Online")
+        case .availableOnly:
+            return String(localized: "Free IPs")
+        }
+    }
+}
+
+/// Drives a single network scan: runs the coordinator, collects results,
+/// persists them, fires notifications and produces the sorted/filtered list the
 /// UI renders.
 @MainActor
 @Observable
@@ -22,6 +44,7 @@ final class ScanViewModel {
 
     var devices: [ScannedDevice] = []
     var searchText: String = ""
+    var filterMode: DeviceListFilter = .all
     var phase: ScanPhase = .idle
     var isScanning = false
     var errorMessage: String?
@@ -36,10 +59,47 @@ final class ScanViewModel {
         self.appState = appState
     }
 
+    // MARK: - Subnet & Free IPs
+
+    var currentCIDR: String? {
+        targetCIDR()
+    }
+
+    var allSubnetHostIPs: [IPv4Address] {
+        guard let cidr = targetCIDR() else { return [] }
+        return IPv4CIDR.hostAddresses(cidr)
+    }
+
+    var totalSubnetHostsCount: Int {
+        allSubnetHostIPs.count
+    }
+
+    var availableIPs: [String] {
+        guard let cidr = targetCIDR() else { return [] }
+        let allHosts = IPv4CIDR.hostAddresses(cidr)
+        let occupied = Set(devices.map(\.ip))
+        var freeList = allHosts.map(\.description).filter { !occupied.contains($0) }
+        if !appState.sortAscending && appState.sortKey == .ip {
+            freeList.reverse()
+        }
+        return freeList
+    }
+
+    var filteredAvailableIPs: [String] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return availableIPs
+        }
+        return availableIPs.filter { $0.localizedCaseInsensitiveContains(query) }
+    }
+
     // MARK: - Derived list
 
     var filteredDevices: [ScannedDevice] {
         var result = devices
+        if filterMode == .onlineOnly {
+            result = result.filter(\.isOnline)
+        }
         if appState.showOnlyNew {
             result = result.filter(\.isNew)
         }

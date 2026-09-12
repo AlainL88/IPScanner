@@ -156,4 +156,59 @@ final class ScanViewModelTests: XCTestCase {
         let state2 = AppState(defaults: defaults)
         XCTAssertEqual(state2.visibleColumns, [.ip, .hostname, .lastSeen])
     }
+
+    func testFilterModeOnlineOnly() {
+        viewModel.devices[1] = ScannedDevice(
+            id: "192.168.1.20",
+            ip: "192.168.1.20",
+            mac: "11:22:33:44:55:66",
+            hostname: "brother-printer.local",
+            vendor: "Brother Industries",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: false,
+            isNew: false
+        )
+
+        viewModel.filterMode = .onlineOnly
+        XCTAssertEqual(viewModel.filteredDevices.count, 2)
+        XCTAssertTrue(viewModel.filteredDevices.allSatisfy(\.isOnline))
+
+        viewModel.filterMode = .all
+        XCTAssertEqual(viewModel.filteredDevices.count, 3)
+    }
+
+    func testAvailableIPsForCustomRange() {
+        let range = CustomNetworkRange(name: "Test Subnet", cidr: "192.168.1.0/24")
+        context.insert(range)
+        try? context.save()
+        appState.selection = .network(.custom(range.persistentModelID))
+
+        XCTAssertEqual(viewModel.totalSubnetHostsCount, 254)
+        // 254 total host IPs minus 3 occupied devices (.10, .20, .30) = 251 available IPs
+        XCTAssertEqual(viewModel.availableIPs.count, 251)
+        XCTAssertFalse(viewModel.availableIPs.contains("192.168.1.10"))
+        XCTAssertFalse(viewModel.availableIPs.contains("192.168.1.20"))
+        XCTAssertFalse(viewModel.availableIPs.contains("192.168.1.30"))
+        XCTAssertTrue(viewModel.availableIPs.contains("192.168.1.1"))
+        XCTAssertTrue(viewModel.availableIPs.contains("192.168.1.15"))
+    }
+
+    func testFilteredAvailableIPsWithSearch() {
+        let range = CustomNetworkRange(name: "Test Subnet", cidr: "192.168.1.0/24")
+        context.insert(range)
+        try? context.save()
+        appState.selection = .network(.custom(range.persistentModelID))
+
+        viewModel.searchText = ".15"
+        XCTAssertTrue(viewModel.filteredAvailableIPs.contains("192.168.1.15"))
+        XCTAssertFalse(viewModel.filteredAvailableIPs.contains("192.168.1.10")) // occupied
+
+        viewModel.searchText = "192.168.1.10"
+        XCTAssertFalse(viewModel.filteredAvailableIPs.contains("192.168.1.10")) // .10 is occupied
+        XCTAssertTrue(viewModel.filteredAvailableIPs.contains("192.168.1.100")) // .100 is available and matches query
+
+        viewModel.searchText = "10.99.99"
+        XCTAssertTrue(viewModel.filteredAvailableIPs.isEmpty) // outside subnet range
+    }
 }

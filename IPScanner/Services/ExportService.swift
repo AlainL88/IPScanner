@@ -65,6 +65,35 @@ public enum ExportService {
         return String(data: data, encoding: .utf8) ?? "[]"
     }
 
+    public static func availableIPsData(for ips: [String], cidr: String, format: ExportFormat) -> Data {
+        switch format {
+        case .csv: return Data(availableIPsCSVString(for: ips, cidr: cidr).utf8)
+        case .json: return Data(availableIPsJSONString(for: ips, cidr: cidr).utf8)
+        }
+    }
+
+    public static func availableIPsCSVString(for ips: [String], cidr: String) -> String {
+        var lines = ["IP,Status,Subnet"]
+        for ip in ips {
+            lines.append("\(csvEscape(ip)),available,\(csvEscape(cidr))")
+        }
+        return lines.joined(separator: "\n") + "\n"
+    }
+
+    public static func availableIPsJSONString(for ips: [String], cidr: String) -> String {
+        let items = ips.map { ip -> [String: String] in
+            [
+                "ip": ip,
+                "status": "available",
+                "subnet": cidr
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: items, options: [.prettyPrinted, .sortedKeys]) else {
+            return "[]"
+        }
+        return String(data: data, encoding: .utf8) ?? "[]"
+    }
+
     private static func csvEscape(_ field: String) -> String {
         if field.contains(",") || field.contains("\"") || field.contains("\n") {
             return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""

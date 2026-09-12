@@ -49,4 +49,21 @@ final class ExportTests: XCTestCase {
         let object = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [Any]
         XCTAssertEqual(object?.isEmpty, true)
     }
+
+    func testAvailableIPsExport() throws {
+        let ips = ["192.168.1.15", "192.168.1.16"]
+        let csv = ExportService.availableIPsCSVString(for: ips, cidr: "192.168.1.0/24")
+        XCTAssertTrue(csv.hasPrefix("IP,Status,Subnet\n"))
+        XCTAssertTrue(csv.contains("192.168.1.15,available,192.168.1.0/24"))
+        XCTAssertTrue(csv.contains("192.168.1.16,available,192.168.1.0/24"))
+
+        let json = ExportService.availableIPsJSONString(for: ips, cidr: "192.168.1.0/24")
+        let object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: String]]
+        )
+        XCTAssertEqual(object.count, 2)
+        XCTAssertEqual(object[0]["ip"], "192.168.1.15")
+        XCTAssertEqual(object[0]["status"], "available")
+        XCTAssertEqual(object[0]["subnet"], "192.168.1.0/24")
+    }
 }
