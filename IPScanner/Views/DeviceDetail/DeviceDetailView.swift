@@ -96,7 +96,7 @@ struct DeviceDetailView: View {
 
     private var infoSection: some View {
         VStack(spacing: 0) {
-            infoRow(label: String(localized: "IP Address"), value: device.ip)
+            infoRow(label: String(localized: "IP Address"), value: device.ip, isMonospaced: true)
             Divider()
             macRow
             Divider()
@@ -113,16 +113,18 @@ struct DeviceDetailView: View {
         .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: Theme.cornerRadius))
     }
 
-    private func infoRow(label: String, value: String) -> some View {
+    private func infoRow(label: String, value: String, isMonospaced: Bool = false) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Text(label)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
             Text(value)
+                .font(isMonospaced ? .system(.subheadline, design: .monospaced).weight(.medium) : .subheadline.weight(.medium))
+                .foregroundStyle(.primary)
                 .multilineTextAlignment(.trailing)
                 .textSelection(.enabled)
         }
-        .font(.subheadline)
         .padding(.vertical, 8)
         .contextMenu {
             if value != "—" {
@@ -140,14 +142,19 @@ struct DeviceDetailView: View {
     private var macRow: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(String(localized: "MAC Address"))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
             if let mac = device.mac, !mac.isEmpty {
                 Text(mac)
+                    .font(.system(.subheadline, design: .monospaced).weight(.medium))
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.trailing)
                     .textSelection(.enabled)
             } else {
                 Text(String(localized: "N/A"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.trailing)
                     .textSelection(.enabled)
                 Button {
@@ -160,7 +167,6 @@ struct DeviceDetailView: View {
                 .accessibilityLabel(String(localized: "Why is the MAC missing?"))
             }
         }
-        .font(.subheadline)
         .padding(.vertical, 8)
         .contextMenu {
             if let mac = device.mac, !mac.isEmpty {

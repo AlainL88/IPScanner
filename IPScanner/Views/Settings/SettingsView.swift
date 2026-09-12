@@ -56,6 +56,22 @@ struct SettingsView: View {
                 .onChange(of: appState.rowDensity) { _, _ in appState.persist() }
             }
 
+            Section(String(localized: "Column visibility")) {
+                ForEach(DeviceColumn.allCases) { column in
+                    Toggle(column.label, isOn: Binding(
+                        get: { appState.visibleColumns.contains(column) },
+                        set: { isVisible in
+                            if isVisible {
+                                appState.visibleColumns.insert(column)
+                            } else {
+                                appState.visibleColumns.remove(column)
+                            }
+                            appState.persist()
+                        }
+                    ))
+                }
+            }
+
             Section(String(localized: "About")) {
                 LabeledContent(String(localized: "Version"), value: versionString)
                 LabeledContent(

@@ -65,6 +65,102 @@
         }
       }
     },
+    "%lld of %lld devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld di %lld dispositivi"
+          }
+        }
+      }
+    },
+    "%lld devices (%lld online)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld devices (%lld online)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dispositivi (%lld online)"
+          }
+        }
+      }
+    },
+    "Just now": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just now"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adesso"
+          }
+        }
+      }
+    },
+    "%ldm ago": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%ldm ago"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%ldm fa"
+          }
+        }
+      }
+    },
+    "%ldh ago": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%ldh ago"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%ldh fa"
+          }
+        }
+      }
+    },
+    "Scanning… (%lld/%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning… (%lld/%lld)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scansione in corso… (%lld/%lld)"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "en": {

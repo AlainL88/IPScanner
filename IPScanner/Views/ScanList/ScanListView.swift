@@ -69,6 +69,9 @@ struct ScanListView: View {
         )
         .navigationTitle(title)
         .toolbar { toolbarContent }
+        .safeAreaInset(edge: .bottom) {
+            statusBar
+        }
         .overlay(alignment: .bottom) {
             if let error = viewModel.errorMessage {
                 errorBanner(error)
@@ -77,6 +80,26 @@ struct ScanListView: View {
         .sheet(isPresented: $showingTools) {
             let host = viewModel.devices.first?.ip ?? ""
             ToolsView(initialHost: host, initialMAC: persistedMAC(for: host))
+        }
+    }
+
+    @ViewBuilder
+    private var statusBar: some View {
+        if !viewModel.devices.isEmpty {
+            HStack {
+                if !viewModel.searchText.isEmpty {
+                    Text(String(format: String(localized: "%lld of %lld devices"), Int64(viewModel.filteredDevices.count), Int64(viewModel.devices.count)))
+                } else {
+                    let onlineCount = viewModel.devices.filter(\.isOnline).count
+                    Text(String(format: String(localized: "%lld devices (%lld online)"), Int64(viewModel.devices.count), Int64(onlineCount)))
+                }
+            }
+            .font(.footnote.weight(.medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(.bar)
         }
     }
 
@@ -152,16 +175,17 @@ struct ScanListView: View {
 
             Menu {
                 ForEach(DeviceColumn.allCases) { column in
-                    Button {
-                        if appState.visibleColumns.contains(column) {
-                            appState.visibleColumns.remove(column)
-                        } else {
-                            appState.visibleColumns.insert(column)
+                    Toggle(column.label, isOn: Binding(
+                        get: { appState.visibleColumns.contains(column) },
+                        set: { isVisible in
+                            if isVisible {
+                                appState.visibleColumns.insert(column)
+                            } else {
+                                appState.visibleColumns.remove(column)
+                            }
+                            appState.persist()
                         }
-                        appState.persist()
-                    } label: {
-                        Label(column.label, systemImage: appState.visibleColumns.contains(column) ? "checkmark" : "")
-                    }
+                    ))
                 }
             } label: {
                 Label(String(localized: "Columns"), systemImage: "rectangle.grid.1x2")

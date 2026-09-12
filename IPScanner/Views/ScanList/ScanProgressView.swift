@@ -33,8 +33,12 @@ struct ScanProgressView: View {
         switch phase {
         case .idle, .subnetDetection, .finishing:
             return String(localized: "Preparing…")
-        case .pinging:
-            return String(localized: "Scanning…")
+        case .pinging(let completed, let total):
+            if total > 0 {
+                return String(format: String(localized: "Scanning… (%lld/%lld)"), Int64(completed), Int64(total))
+            } else {
+                return String(localized: "Scanning…")
+            }
         case .arpReading:
             return String(localized: "Reading ARP cache…")
         case .bonjourDiscovery:

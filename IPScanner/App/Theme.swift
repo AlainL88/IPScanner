@@ -17,9 +17,9 @@ enum RowDensity: String, CaseIterable, Identifiable, Sendable {
 
     var rowHeight: CGFloat {
         switch self {
-        case .compact: return 44
-        case .comfortable: return 60
-        case .spacious: return 76
+        case .compact: return 46
+        case .comfortable: return 62
+        case .spacious: return 78
         }
     }
 

@@ -93,7 +93,11 @@ final class AppState {
         rowDensity = RowDensity(rawValue: defaults.string(forKey: Keys.rowDensity) ?? "") ?? .comfortable
         sortKey = SortKey(rawValue: defaults.string(forKey: Keys.sortKey) ?? "") ?? .name
         sortAscending = defaults.object(forKey: Keys.sortAscending) as? Bool ?? true
-        visibleColumns = Set((defaults.stringArray(forKey: Keys.visibleColumns) ?? []).compactMap(DeviceColumn.init(rawValue:)))
+        if let raw = defaults.stringArray(forKey: Keys.visibleColumns) {
+            visibleColumns = Set(raw.compactMap(DeviceColumn.init(rawValue:)))
+        } else {
+            visibleColumns = [.ip, .mac, .hostname, .vendor, .status]
+        }
         isCumulativeMode = defaults.bool(forKey: Keys.cumulativeMode)
         showOnlyNew = defaults.bool(forKey: Keys.showOnlyNew)
         notificationsEnabled = defaults.bool(forKey: Keys.notificationsEnabled)

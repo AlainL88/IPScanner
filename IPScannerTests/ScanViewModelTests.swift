@@ -135,4 +135,25 @@ final class ScanViewModelTests: XCTestCase {
         viewModel.searchText = "non-existent-device-query"
         XCTAssertTrue(viewModel.filteredDevices.isEmpty)
     }
+
+    func testAppStateDefaultVisibleColumns() {
+        let defaults = UserDefaults(suiteName: "test_visible_columns_\(UUID().uuidString)")!
+        let state = AppState(defaults: defaults)
+        XCTAssertTrue(state.visibleColumns.contains(.ip))
+        XCTAssertTrue(state.visibleColumns.contains(.mac))
+        XCTAssertTrue(state.visibleColumns.contains(.hostname))
+        XCTAssertTrue(state.visibleColumns.contains(.vendor))
+        XCTAssertTrue(state.visibleColumns.contains(.status))
+    }
+
+    func testAppStateVisibleColumnsPersistence() {
+        let suite = "test_visible_columns_persist_\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        let state1 = AppState(defaults: defaults)
+        state1.visibleColumns = [.ip, .hostname, .lastSeen]
+        state1.persist()
+
+        let state2 = AppState(defaults: defaults)
+        XCTAssertEqual(state2.visibleColumns, [.ip, .hostname, .lastSeen])
+    }
 }
