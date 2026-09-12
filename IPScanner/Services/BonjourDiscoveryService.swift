@@ -34,9 +34,12 @@ public actor BonjourDiscoveryService {
 
         var result: [String: String] = [:]
 
+        let semaphore = AsyncSemaphore(count: 16)
         await withTaskGroup(of: (ip: String, hostname: String)?.self) { group in
             for item in discovered {
                 group.addTask {
+                    await semaphore.wait()
+                    defer { semaphore.signal() }
                     guard let ip = await self.resolveIP(for: item.endpoint) else { return nil }
                     let cleanName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !cleanName.isEmpty else { return nil }
@@ -85,7 +88,11 @@ public actor BonjourDiscoveryService {
 
     /// Resolves an mDNS service endpoint to an IPv4 string without requiring TCP connection handshakes.
     private func resolveIP(for endpoint: NWEndpoint) async -> String? {
-        let connection = NWConnection(to: endpoint, using: .udp)
+        let params = NWParameters.udp
+        if let ipOptions = params.defaultProtocolStack.internetProtocol as? NWProtocolIP.Options {
+            ipOptions.version = .v4
+        }
+        let connection = NWConnection(to: endpoint, using: params)
         let resumeOnce = ResumeOnce()
 
         return await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
@@ -108,7 +115,7 @@ public actor BonjourDiscoveryService {
             }
             connection.start(queue: .global(qos: .userInitiated))
 
-            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
                 resumeOnce.run {
                     connection.cancel()
                     continuation.resume(returning: nil)

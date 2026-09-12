@@ -102,6 +102,11 @@ public actor NetworkScannerCoordinator {
                 let targetIPSet = Set(targetAddressStrings)
                 let oui = OUILookupService()
                 let pingService = PingService(timeout: 1.0)
+                let bonjour = BonjourDiscoveryService()
+                let bonjourTask = Task { () -> [String: String] in
+                    guard includeBonjour else { return [:] }
+                    return await bonjour.resolveHostnames(for: targetIPSet, duration: 5.0)
+                }
 
                 // 1. Concurrent ICMP ping sweep with immediate streaming as IPs respond.
                 _ = await pingService.pingSweep(addresses: targetAddressStrings, concurrency: 48) { result in
@@ -126,6 +131,7 @@ public actor NetworkScannerCoordinator {
                 }
 
                 guard !Task.isCancelled else {
+                    bonjourTask.cancel()
                     continuation.finish()
                     return
                 }
@@ -146,6 +152,7 @@ public actor NetworkScannerCoordinator {
                 }
 
                 guard !Task.isCancelled else {
+                    bonjourTask.cancel()
                     continuation.finish()
                     return
                 }
@@ -154,12 +161,7 @@ public actor NetworkScannerCoordinator {
                 // Resolves hostnames for detected devices and discovers mDNS-broadcasting hosts.
                 if includeBonjour {
                     continuation.yield(.phase(.bonjourDiscovery))
-                    let bonjour = BonjourDiscoveryService()
-                    let currentDevices = store.all()
-                    let knownIPs = Set(currentDevices.map(\.ip))
-                    let queryIPs = knownIPs.isEmpty ? targetIPSet : knownIPs
-
-                    let bonjourHostnames = await bonjour.resolveHostnames(for: queryIPs, duration: 2)
+                    let bonjourHostnames = await bonjourTask.value
                     for (ip, hostname) in bonjourHostnames {
                         if targetIPSet.contains(ip) {
                             let device = store.update(ip: ip, hostname: hostname)
@@ -191,6 +193,22 @@ public actor NetworkScannerCoordinator {
                                 let updated = store.update(ip: ip, hostname: reverseName)
                                 continuation.yield(.device(updated))
                             }
+                        }
+                    }
+                }
+
+                // 5. Local host identification fallback:
+                if let localIP = SubnetService.primaryIPv4Interface()?.ipAddress {
+                    let all = store.all()
+                    if let localDev = all.first(where: { $0.ip == localIP }), localDev.hostname == nil || localDev.hostname?.isEmpty == true {
+                        #if os(macOS)
+                        let localName = Host.current().localizedName ?? DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
+                        #else
+                        let localName = DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
+                        #endif
+                        if let localName, !localName.isEmpty {
+                            let updated = store.update(ip: localIP, hostname: localName)
+                            continuation.yield(.device(updated))
                         }
                     }
                 }

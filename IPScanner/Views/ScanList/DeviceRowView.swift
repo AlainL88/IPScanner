@@ -71,6 +71,9 @@ struct DeviceRowView: View {
 
     private var subtitle: String {
         var parts: [String] = [device.ip]
+        if columns.contains(.hostname), let hostname = device.hostname, !hostname.isEmpty, displayName != hostname {
+            parts.append(hostname)
+        }
         if columns.contains(.vendor), let vendor = device.vendor, !vendor.isEmpty {
             parts.append(vendor)
         }
