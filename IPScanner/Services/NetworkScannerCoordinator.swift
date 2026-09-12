@@ -137,17 +137,49 @@ public actor NetworkScannerCoordinator {
                 }
 
                 // 2. ARP Table check:
-                // Many devices (Windows firewalls, IoT devices, printers) DROP ICMP ping,
-                // but answer Layer-2 ARP requests sent during the sweep.
-                // Any device with a valid MAC in the ARP table is online on the local link.
+                // Enrich already detected devices with MAC and Vendor from the ARP cache.
+                // For unpinged hosts found in the ARP table, probe them with a quick TCP check
+                // to distinguish truly active hosts (e.g. stealth firewalls) from stale/ghost cache entries.
                 continuation.yield(.phase(.arpReading))
                 let arpEntries = ARPTableService.read()
+                let unconfirmedEntries = arpEntries.filter { entry in
+                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return false }
+                    return targetIPSet.contains(entry.ipAddress) && store.get(entry.ipAddress) == nil
+                }
+
+                // 2a. Enrich already discovered hosts immediately:
                 for entry in arpEntries {
                     guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { continue }
-                    if targetIPSet.contains(entry.ipAddress) {
+                    if store.get(entry.ipAddress) != nil {
                         let vendor = await oui.vendorName(forMAC: mac)
                         let device = store.update(ip: entry.ipAddress, mac: mac, vendor: vendor)
                         continuation.yield(.device(device))
+                    }
+                }
+
+                // 2b. Verify unconfirmed ARP cache entries concurrently:
+                if !unconfirmedEntries.isEmpty {
+                    let semaphore = AsyncSemaphore(count: 16)
+                    await withTaskGroup(of: (String, String, String?)?.self) { group in
+                        for entry in unconfirmedEntries {
+                            guard let mac = entry.macAddress else { continue }
+                            let ip = entry.ipAddress
+                            group.addTask {
+                                await semaphore.wait()
+                                defer { semaphore.signal() }
+                                guard await PortScanService.isHostReachable(host: ip, timeout: 0.35) else {
+                                    return nil
+                                }
+                                let vendor = await oui.vendorName(forMAC: mac)
+                                return (ip, mac, vendor)
+                            }
+                        }
+                        for await result in group {
+                            if let (ip, mac, vendor) = result {
+                                let device = store.update(ip: ip, mac: mac, vendor: vendor)
+                                continuation.yield(.device(device))
+                            }
+                        }
                     }
                 }
 
@@ -269,6 +301,12 @@ private final class DiscoveredDevicesStore: @unchecked Sendable {
         )
         devices[ip] = device
         return device
+    }
+
+    func get(_ ip: String) -> ScannedDevice? {
+        lock.lock()
+        defer { lock.unlock() }
+        return devices[ip]
     }
 
     func all() -> [ScannedDevice] {

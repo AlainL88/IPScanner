@@ -95,8 +95,30 @@ public actor PortScanService {
         }
     }
 
+    /// Probes a host across common TCP ports with a short timeout to check if it is active.
+    public static func isHostReachable(
+        host: String,
+        probePorts: [UInt16] = [80, 443, 445, 139, 22, 8080, 53, 8000, 8443, 5000],
+        timeout: TimeInterval = 0.4
+    ) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            for port in probePorts {
+                group.addTask {
+                    await isOpen(host: host, port: port, timeout: timeout)
+                }
+            }
+            for await isOpen in group {
+                if isOpen {
+                    group.cancelAll()
+                    return true
+                }
+            }
+            return false
+        }
+    }
+
     /// Checks whether a TCP connection to host:port succeeds within `timeout`.
-    private static func isOpen(host: String, port: UInt16, timeout: TimeInterval) async -> Bool {
+    public static func isOpen(host: String, port: UInt16, timeout: TimeInterval) async -> Bool {
         guard let nwPort = NWEndpoint.Port(rawValue: port) else { return false }
         let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: .tcp)
         let resumeOnce = ResumeOnce()
