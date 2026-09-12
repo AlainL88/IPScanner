@@ -66,6 +66,18 @@ struct ScanListView: View {
                             systemImage: "wifi.slash",
                             description: Text(String(localized: "No active devices currently online."))
                         )
+                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .whitelistedOnly {
+                        ContentUnavailableView(
+                            String(localized: "No Whitelisted Devices"),
+                            systemImage: "shield.slash",
+                            description: Text(String(localized: "No devices have been marked as whitelisted yet. Open device details to whitelist trusted devices."))
+                        )
+                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .notWhitelistedOnly {
+                        ContentUnavailableView(
+                            String(localized: "All Devices Whitelisted"),
+                            systemImage: "checkmark.shield",
+                            description: Text(String(localized: "All discovered devices are currently in your whitelist."))
+                        )
                     } else {
                         deviceList
                     }
@@ -116,7 +128,8 @@ struct ScanListView: View {
                         displayName: persisted?.customName ?? device.hostname ?? device.ip,
                         icon: persisted?.customIcon ?? Device.inferredIcon(for: device.hostname, ip: device.ip),
                         density: appState.rowDensity,
-                        columns: appState.visibleColumns
+                        columns: appState.visibleColumns,
+                        isWhitelisted: persisted?.isWhitelisted ?? false
                     )
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
@@ -200,6 +213,21 @@ struct ScanListView: View {
                     } else {
                         Text(String(format: String(localized: "%lld online devices"), Int64(onlineDevices.count)))
                     }
+                case .whitelistedOnly:
+                    let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+                    let totalWhitelisted = allPersisted.filter(\.isWhitelisted).count
+                    if !viewModel.searchText.isEmpty {
+                        Text(String(format: String(localized: "%lld of %lld whitelisted devices"), Int64(viewModel.filteredDevices.count), Int64(totalWhitelisted)))
+                    } else {
+                        Text(String(format: String(localized: "%lld whitelisted devices"), Int64(viewModel.filteredDevices.count)))
+                    }
+                case .notWhitelistedOnly:
+                    let nonWhitelistedCount = viewModel.filteredDevices.count
+                    if !viewModel.searchText.isEmpty {
+                        Text(String(format: String(localized: "%lld of %lld untrusted devices"), Int64(viewModel.filteredDevices.count), Int64(nonWhitelistedCount)))
+                    } else {
+                        Text(String(format: String(localized: "%lld untrusted devices"), Int64(nonWhitelistedCount)))
+                    }
                 case .availableOnly:
                     let total = viewModel.totalSubnetHostsCount
                     let freeCount = viewModel.availableIPs.count
@@ -250,64 +278,68 @@ struct ScanListView: View {
             }
         }
 
-        ToolbarItemGroup {
+        ToolbarItem(placement: .automatic) {
             Menu {
-                ForEach(SortKey.allCases) { key in
-                    Button {
-                        appState.sortKey = key
-                        appState.persist()
-                    } label: {
-                        Label(key.label, systemImage: appState.sortKey == key ? "checkmark" : "")
-                    }
-                }
-                Divider()
-                Button {
-                    appState.sortAscending.toggle()
-                    appState.persist()
-                } label: {
-                    Label(
-                        appState.sortAscending ? String(localized: "Ascending") : String(localized: "Descending"),
-                        systemImage: appState.sortAscending ? "arrow.up" : "arrow.down"
-                    )
-                }
-            } label: {
-                Label(String(localized: "Sort by"), systemImage: "arrow.up.arrow.down")
-            }
-            .accessibilityLabel(String(localized: "Sort by"))
-
-            Menu {
-                ForEach(DeviceColumn.allCases) { column in
-                    Toggle(column.label, isOn: Binding(
-                        get: { appState.visibleColumns.contains(column) },
-                        set: { isVisible in
-                            if isVisible {
-                                appState.visibleColumns.insert(column)
-                            } else {
-                                appState.visibleColumns.remove(column)
-                            }
+                Menu {
+                    ForEach(SortKey.allCases) { key in
+                        Button {
+                            appState.sortKey = key
                             appState.persist()
+                        } label: {
+                            Label(key.label, systemImage: appState.sortKey == key ? "checkmark" : "")
                         }
-                    ))
-                }
-            } label: {
-                Label(String(localized: "Columns"), systemImage: "rectangle.grid.1x2")
-            }
-            .accessibilityLabel(String(localized: "Column visibility"))
-
-            Menu {
-                ForEach(RowDensity.allCases) { density in
+                    }
+                    Divider()
                     Button {
-                        appState.rowDensity = density
+                        appState.sortAscending.toggle()
                         appState.persist()
                     } label: {
-                        Label(density.label, systemImage: appState.rowDensity == density ? "checkmark" : "")
+                        Label(
+                            appState.sortAscending ? String(localized: "Ascending") : String(localized: "Descending"),
+                            systemImage: appState.sortAscending ? "arrow.up" : "arrow.down"
+                        )
                     }
+                } label: {
+                    Label(String(localized: "Sort by"), systemImage: "arrow.up.arrow.down")
+                }
+
+                Menu {
+                    ForEach(RowDensity.allCases) { density in
+                        Button {
+                            appState.rowDensity = density
+                            appState.persist()
+                        } label: {
+                            Label(density.label, systemImage: appState.rowDensity == density ? "checkmark" : "")
+                        }
+                    }
+                } label: {
+                    Label(String(localized: "Row size"), systemImage: "textformat.size")
+                }
+
+                Menu {
+                    ForEach(DeviceColumn.allCases) { column in
+                        Toggle(column.label, isOn: Binding(
+                            get: { appState.visibleColumns.contains(column) },
+                            set: { isVisible in
+                                if isVisible {
+                                    appState.visibleColumns.insert(column)
+                                } else {
+                                    appState.visibleColumns.remove(column)
+                                }
+                                appState.persist()
+                            }
+                        ))
+                    }
+                } label: {
+                    Label(String(localized: "Columns"), systemImage: "rectangle.grid.1x2")
                 }
             } label: {
-                Label(String(localized: "Row size"), systemImage: "textformat.size")
+                Label(String(localized: "View options"), systemImage: "slider.horizontal.3")
             }
-            .accessibilityLabel(String(localized: "Row size"))
+            .accessibilityLabel(String(localized: "View options"))
+        }
 
+        ToolbarItem(placement: .automatic) {
             Menu {
                 if let csvURL = exportURL(.csv) {
                     ShareLink(item: csvURL, preview: SharePreview(String(localized: "Export CSV"))) {

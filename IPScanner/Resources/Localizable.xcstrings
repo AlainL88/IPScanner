@@ -1920,6 +1920,198 @@
           }
         }
       }
+    },
+    "View options": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View options"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opzioni vista"
+          }
+        }
+      }
+    },
+    "Whitelisted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whitelisted"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Whitelist"
+          }
+        }
+      }
+    },
+    "Not in Whitelist": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in Whitelist"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non in Whitelist"
+          }
+        }
+      }
+    },
+    "Not in whitelist": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not in whitelist"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non in whitelist"
+          }
+        }
+      }
+    },
+    "No Whitelisted Devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Whitelisted Devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun dispositivo in whitelist"
+          }
+        }
+      }
+    },
+    "No devices have been marked as whitelisted yet. Open device details to whitelist trusted devices.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No devices have been marked as whitelisted yet. Open device details to whitelist trusted devices."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun dispositivo è stato ancora inserito nella whitelist. Apri i dettagli di un dispositivo per contrassegnarlo come fidato."
+          }
+        }
+      }
+    },
+    "All Devices Whitelisted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Devices Whitelisted"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutti i dispositivi in whitelist"
+          }
+        }
+      }
+    },
+    "All discovered devices are currently in your whitelist.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All discovered devices are currently in your whitelist."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutti i dispositivi rilevati sono attualmente presenti nella tua whitelist."
+          }
+        }
+      }
+    },
+    "%lld whitelisted devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld whitelisted devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dispositivi in whitelist"
+          }
+        }
+      }
+    },
+    "%lld of %lld whitelisted devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld whitelisted devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld di %lld dispositivi in whitelist"
+          }
+        }
+      }
+    },
+    "%lld untrusted devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld untrusted devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld dispositivi non in whitelist"
+          }
+        }
+      }
+    },
+    "%lld of %lld untrusted devices": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld untrusted devices"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld di %lld dispositivi non in whitelist"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

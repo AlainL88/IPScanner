@@ -16,6 +16,8 @@ import Observation
 public enum DeviceListFilter: String, CaseIterable, Identifiable, Sendable {
     case all
     case onlineOnly
+    case whitelistedOnly
+    case notWhitelistedOnly
     case availableOnly
 
     public var id: String { rawValue }
@@ -26,6 +28,10 @@ public enum DeviceListFilter: String, CaseIterable, Identifiable, Sendable {
             return String(localized: "All")
         case .onlineOnly:
             return String(localized: "Online")
+        case .whitelistedOnly:
+            return String(localized: "Whitelisted")
+        case .notWhitelistedOnly:
+            return String(localized: "Not in Whitelist")
         case .availableOnly:
             return String(localized: "Free IPs")
         }
@@ -97,9 +103,41 @@ final class ScanViewModel {
 
     var filteredDevices: [ScannedDevice] {
         var result = devices
-        if filterMode == .onlineOnly {
+        let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+
+        switch filterMode {
+        case .all:
+            break
+        case .onlineOnly:
             result = result.filter(\.isOnline)
+        case .whitelistedOnly:
+            let whitelistedMACs = Set(allPersisted.filter(\.isWhitelisted).compactMap { dev -> String? in
+                guard let mac = dev.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
+                return mac.uppercased()
+            })
+            let whitelistedIPs = Set(allPersisted.filter(\.isWhitelisted).map(\.ipAddress))
+            result = result.filter { dev in
+                if let mac = dev.mac?.uppercased(), whitelistedMACs.contains(mac) {
+                    return true
+                }
+                return whitelistedIPs.contains(dev.ip)
+            }
+        case .notWhitelistedOnly:
+            let whitelistedMACs = Set(allPersisted.filter(\.isWhitelisted).compactMap { dev -> String? in
+                guard let mac = dev.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
+                return mac.uppercased()
+            })
+            let whitelistedIPs = Set(allPersisted.filter(\.isWhitelisted).map(\.ipAddress))
+            result = result.filter { dev in
+                if let mac = dev.mac?.uppercased(), whitelistedMACs.contains(mac) {
+                    return false
+                }
+                return !whitelistedIPs.contains(dev.ip)
+            }
+        case .availableOnly:
+            break
         }
+
         if appState.showOnlyNew {
             result = result.filter(\.isNew)
         }
@@ -108,7 +146,6 @@ final class ScanViewModel {
         if !query.isEmpty {
             let lowerQuery = query.lowercased()
             let cleanHexQuery = lowerQuery.replacingOccurrences(of: ":", with: "").replacingOccurrences(of: "-", with: "")
-            let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
 
             result = result.filter { device in
                 // 1. IP match

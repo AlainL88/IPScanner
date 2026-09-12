@@ -211,4 +211,23 @@ final class ScanViewModelTests: XCTestCase {
         viewModel.searchText = "10.99.99"
         XCTAssertTrue(viewModel.filteredAvailableIPs.isEmpty) // outside subnet range
     }
+
+    func testFilterModeWhitelistedOnly() {
+        // Persist one whitelisted device (macbook at 192.168.1.10)
+        let whitelistedDevice = Device(
+            ipAddress: "192.168.1.10",
+            macAddress: "AA:BB:CC:11:22:33",
+            isWhitelisted: true
+        )
+        context.insert(whitelistedDevice)
+        try? context.save()
+
+        viewModel.filterMode = .whitelistedOnly
+        XCTAssertEqual(viewModel.filteredDevices.count, 1)
+        XCTAssertEqual(viewModel.filteredDevices.first?.ip, "192.168.1.10")
+
+        viewModel.filterMode = .notWhitelistedOnly
+        XCTAssertEqual(viewModel.filteredDevices.count, 2)
+        XCTAssertFalse(viewModel.filteredDevices.contains(where: { $0.ip == "192.168.1.10" }))
+    }
 }

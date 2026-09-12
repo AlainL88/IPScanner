@@ -37,6 +37,7 @@ enum DeviceColumn: String, CaseIterable, Identifiable, Sendable {
     case vendor
     case lastSeen
     case status
+    case whitelist
 
     var id: String { rawValue }
 
@@ -48,6 +49,7 @@ enum DeviceColumn: String, CaseIterable, Identifiable, Sendable {
         case .vendor: return String(localized: "Vendor")
         case .lastSeen: return String(localized: "Last seen")
         case .status: return String(localized: "Status")
+        case .whitelist: return String(localized: "Whitelist")
         }
     }
 }

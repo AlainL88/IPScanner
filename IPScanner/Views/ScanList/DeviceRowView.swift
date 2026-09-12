@@ -15,6 +15,7 @@ struct DeviceRowView: View {
     let icon: String
     let density: RowDensity
     let columns: Set<DeviceColumn>
+    var isWhitelisted: Bool = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -44,6 +45,13 @@ struct DeviceRowView: View {
                 .font(.system(size: titleFontSize, weight: .semibold, design: isDisplayNameAnIP ? .monospaced : .default))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
+
+            if isWhitelisted {
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: subtitleFontSize - 1))
+                    .foregroundStyle(Color.accentColor)
+                    .accessibilityLabel(String(localized: "Whitelisted"))
+            }
 
             if device.isNew {
                 Text(String(localized: "New"))
@@ -176,6 +184,13 @@ struct DeviceRowView: View {
         }
         if columns.contains(.mac), let mac = device.mac, !mac.isEmpty {
             items.append(SubtitleItem(text: mac, isMonospaced: true, iconName: nil))
+        }
+        if columns.contains(.whitelist) {
+            items.append(SubtitleItem(
+                text: isWhitelisted ? String(localized: "Whitelisted") : String(localized: "Not in whitelist"),
+                isMonospaced: false,
+                iconName: isWhitelisted ? "checkmark.shield.fill" : "shield.slash"
+            ))
         }
         if columns.contains(.lastSeen) {
             items.append(SubtitleItem(text: relativeLastSeen, isMonospaced: false, iconName: "clock"))
