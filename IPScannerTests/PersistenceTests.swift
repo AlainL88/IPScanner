@@ -144,6 +144,96 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(all.first?.customName, "My iPhone")
     }
 
+    @MainActor
+    func testDeviceFollowsHostnameWhenIPChangesWithoutMAC() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        // Initial scan: Apple TV at 192.168.1.30 with hostname "appletv-salotto.local", no MAC
+        let initial = ScannedDevice(
+            id: "192.168.1.30",
+            ip: "192.168.1.30",
+            mac: nil,
+            hostname: "appletv-salotto.local",
+            vendor: "Apple",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: true
+        )
+        DeviceStore.upsert(initial, in: context)
+        try context.save()
+
+        let saved = try XCTUnwrap((try context.fetch(FetchDescriptor<Device>())).first)
+        saved.customName = "Apple TV Salotto"
+        try context.save()
+
+        // iOS scan after DHCP change: Apple TV moved to 192.168.1.99, still no MAC available
+        let moved = ScannedDevice(
+            id: "192.168.1.99",
+            ip: "192.168.1.99",
+            mac: nil,
+            hostname: "appletv-salotto.local",
+            vendor: "Apple",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: false
+        )
+        DeviceStore.upsert(moved, in: context)
+        try context.save()
+
+        let all = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(all.count, 1)
+        let resolved = try XCTUnwrap(all.first)
+        XCTAssertEqual(resolved.ipAddress, "192.168.1.99")
+        XCTAssertEqual(resolved.customName, "Apple TV Salotto")
+    }
+
+    @MainActor
+    func testConflictingDeviceDoesNotOverwriteKnownDeviceOnSameIP() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        // 1. Device A originally at 192.168.1.50 with custom name "Clima Salotto"
+        let deviceA = Device(
+            ipAddress: "192.168.1.50",
+            macAddress: "AA:BB:CC:DD:EE:FF",
+            hostname: "clima-salotto.local",
+            customName: "Clima Salotto"
+        )
+        context.insert(deviceA)
+        try context.save()
+
+        // 2. Scan from iOS at 192.168.1.50 finds a different device (Device B, iPad) without MAC
+        let deviceBScanned = ScannedDevice(
+            id: "192.168.1.50",
+            ip: "192.168.1.50",
+            mac: nil,
+            hostname: "ipad-alain.local",
+            vendor: "Apple",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: true
+        )
+        DeviceStore.upsert(deviceBScanned, in: context)
+        try context.save()
+
+        let all = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(all.count, 2)
+
+        // Device A retains its custom name and MAC
+        let original = try XCTUnwrap(all.first(where: { $0.customName == "Clima Salotto" }))
+        XCTAssertEqual(original.macAddress, "AA:BB:CC:DD:EE:FF")
+        XCTAssertFalse(original.isOnline)
+
+        // Device B is created separately with its own hostname
+        let newDevice = try XCTUnwrap(all.first(where: { $0.hostname == "ipad-alain.local" }))
+        XCTAssertEqual(newDevice.ipAddress, "192.168.1.50")
+        XCTAssertNil(newDevice.customName)
+    }
+
     func testInferredIcon() {
         XCTAssertEqual(Device.inferredIcon(for: "Alain-iPad.local", ip: "192.168.1.5"), "ipad")
         XCTAssertEqual(Device.inferredIcon(for: "iPhone-15-Pro.local", ip: "192.168.1.6"), "iphone")

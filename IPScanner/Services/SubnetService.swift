@@ -15,8 +15,14 @@ public struct NetworkInterface: Sendable, Equatable {
     public let prefixLength: UInt8
     public let broadcastAddress: String?
 
-    /// "192.168.1.23/24" — used as the default scan target.
-    public var cidr: String { "\(ipAddress)/\(prefixLength)" }
+    /// Canonical network CIDR (e.g. "192.168.5.0/24") — used as the scan target and display.
+    public var cidr: String {
+        if let ip = IPv4Address(string: ipAddress) {
+            let net = IPv4CIDR.networkAddress(of: ip, prefix: prefixLength)
+            return "\(net.description)/\(prefixLength)"
+        }
+        return "\(ipAddress)/\(prefixLength)"
+    }
 }
 
 /// Determines the primary local IPv4 subnet via `getifaddrs`.

@@ -123,4 +123,19 @@ public enum IPv4CIDR {
         let hostMask: UInt32 = hostBits >= 32 ? .max : (UInt32(1) << hostBits) - 1
         return IPv4Address(uint32: network.uint32 | hostMask)
     }
+
+    /// Canonical base network address for a given IP and prefix.
+    public static func networkAddress(of ip: IPv4Address, prefix: UInt8) -> IPv4Address {
+        guard prefix <= 32 else { return ip }
+        let hostBits = 32 - Int(prefix)
+        let hostMask: UInt32 = hostBits >= 32 ? .max : (UInt32(1) << hostBits) - 1
+        return IPv4Address(uint32: ip.uint32 & ~hostMask)
+    }
+
+    /// Normalizes a CIDR string to its canonical base network form (e.g. "192.168.5.129/24" -> "192.168.5.0/24").
+    public static func canonicalCIDR(_ cidr: String) -> String? {
+        guard let (ip, prefix) = parse(cidr) else { return nil }
+        let net = networkAddress(of: ip, prefix: prefix)
+        return "\(net.description)/\(prefix)"
+    }
 }

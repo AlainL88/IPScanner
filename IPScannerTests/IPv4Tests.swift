@@ -73,4 +73,17 @@ final class IPv4Tests: XCTestCase {
         XCTAssertEqual(IPv4CIDR.hostAddresses("10.0.0.0/31").map(\.description), ["10.0.0.0", "10.0.0.1"])
         XCTAssertEqual(IPv4CIDR.hostAddresses("10.0.0.1/32").map(\.description), ["10.0.0.1"])
     }
+
+    func testNetworkAddress() {
+        let ip = IPv4Address(192, 168, 5, 129)
+        XCTAssertEqual(IPv4CIDR.networkAddress(of: ip, prefix: 24).description, "192.168.5.0")
+        XCTAssertEqual(IPv4CIDR.networkAddress(of: ip, prefix: 16).description, "192.168.0.0")
+        XCTAssertEqual(IPv4CIDR.networkAddress(of: ip, prefix: 8).description, "192.0.0.0")
+    }
+
+    func testCanonicalCIDR() {
+        XCTAssertEqual(IPv4CIDR.canonicalCIDR("192.168.5.129/24"), "192.168.5.0/24")
+        XCTAssertEqual(IPv4CIDR.canonicalCIDR("10.1.2.3/16"), "10.1.0.0/16")
+        XCTAssertNil(IPv4CIDR.canonicalCIDR("invalid"))
+    }
 }
