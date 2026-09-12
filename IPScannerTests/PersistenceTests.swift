@@ -143,4 +143,21 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(all.count, 1)
         XCTAssertEqual(all.first?.customName, "My iPhone")
     }
+
+    func testInferredIcon() {
+        XCTAssertEqual(Device.inferredIcon(for: "Alain-iPad.local", ip: "192.168.1.5"), "ipad")
+        XCTAssertEqual(Device.inferredIcon(for: "iPhone-15-Pro.local", ip: "192.168.1.6"), "iphone")
+        XCTAssertEqual(Device.inferredIcon(for: "MacBook-Pro.local", ip: "192.168.1.7"), "laptopcomputer")
+        XCTAssertEqual(Device.inferredIcon(for: "HomePod-Salotto.local", ip: "192.168.1.8"), "homepod.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "Apple-Watch.local", ip: "192.168.1.9"), "applewatch")
+        XCTAssertEqual(Device.inferredIcon(for: "fritz.box", ip: "192.168.1.1"), "wifi.router")
+        XCTAssertEqual(Device.inferredIcon(for: "synology-ds920.local", ip: "192.168.1.10"), "server.rack")
+        XCTAssertEqual(Device.inferredIcon(for: "camera-ingresso.local", ip: "192.168.1.11"), "camera.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "philips-hue-bridge.local", ip: "192.168.1.12"), "lightbulb.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "ps5-console.local", ip: "192.168.1.13"), "gamecontroller.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "sonos-arc.local", ip: "192.168.1.14"), "speaker.wave.2.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "raspberrypi.local", ip: "192.168.1.15"), "terminal.fill")
+        XCTAssertEqual(Device.inferredIcon(for: "epson-printer.local", ip: "192.168.1.16"), "printer")
+        XCTAssertEqual(Device.inferredIcon(for: "samsung-smart-tv.local", ip: "192.168.1.17"), "tv")
+    }
 }

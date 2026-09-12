@@ -362,29 +362,178 @@ struct DeviceDetailView: View {
 
     // MARK: - Sheets
 
+    private struct IconCategory: Identifiable {
+        let id: String
+        let title: String
+        let icons: [String]
+    }
+
+    private var iconCategories: [IconCategory] {
+        [
+            IconCategory(
+                id: "computers",
+                title: String(localized: "Computers & Tablets"),
+                icons: [
+                    "desktopcomputer",
+                    "laptopcomputer",
+                    "macmini",
+                    "macstudio",
+                    "macpro.gen3",
+                    "ipad",
+                    "ipad.landscape",
+                    "terminal.fill"
+                ]
+            ),
+            IconCategory(
+                id: "mobile",
+                title: String(localized: "Mobile & Wearables"),
+                icons: [
+                    "iphone",
+                    "applewatch",
+                    "headphones",
+                    "airpods",
+                    "airpodspro",
+                    "airtag"
+                ]
+            ),
+            IconCategory(
+                id: "network",
+                title: String(localized: "Networking & Servers"),
+                icons: [
+                    "network",
+                    "wifi.router",
+                    "server.rack",
+                    "externaldrive.fill",
+                    "externaldrive.connected.to.line.below",
+                    "antenna.radiowaves.left.and.right",
+                    "point.3.connected.trianglepath.dotted",
+                    "shield.checkerboard"
+                ]
+            ),
+            IconCategory(
+                id: "smarthome",
+                title: String(localized: "Smart Home & IoT"),
+                icons: [
+                    "homepod.fill",
+                    "homepodmini.fill",
+                    "camera.fill",
+                    "lightbulb.fill",
+                    "powerplug.fill",
+                    "switch.2",
+                    "sensor.fill",
+                    "thermometer.medium",
+                    "lock.fill",
+                    "fan.fill",
+                    "air.purifier.fill",
+                    "solarpanels.fill",
+                    "ev.charger.fill"
+                ]
+            ),
+            IconCategory(
+                id: "media",
+                title: String(localized: "Audio, Video & Gaming"),
+                icons: [
+                    "tv.fill",
+                    "appletv.fill",
+                    "speaker.wave.2.fill",
+                    "speaker.wave.3.fill",
+                    "hifispeaker.fill",
+                    "videoprojector.fill",
+                    "gamecontroller.fill"
+                ]
+            ),
+            IconCategory(
+                id: "office",
+                title: String(localized: "Office & Peripherals"),
+                icons: [
+                    "printer.fill",
+                    "printer.dotmatrix.fill",
+                    "scanner.fill",
+                    "display",
+                    "keyboard.fill",
+                    "creditcard.fill"
+                ]
+            ),
+            IconCategory(
+                id: "other",
+                title: String(localized: "Other"),
+                icons: [
+                    "car.fill",
+                    "battery.100percent.bolt",
+                    "bolt.fill",
+                    "questionmark.circle.fill"
+                ]
+            )
+        ]
+    }
+
     private var iconPickerSheet: some View {
         NavigationStack {
-            let icons = ["desktopcomputer", "laptopcomputer", "iphone", "ipad", "tv", "printer", "server.rack", "router", "camera.fill", "speaker.wave.2.fill", "gamecontroller.fill", "hdd.fill"]
             ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: Theme.spacing) {
-                    ForEach(icons, id: \.self) { name in
+                VStack(alignment: .leading, spacing: 20) {
+                    if persistedDevice?.customIcon != nil {
                         Button {
-                            persistedDevice?.customIcon = name
+                            persistedDevice?.customIcon = nil
                             try? context.save()
                             showingIconPicker = false
                         } label: {
-                            Image(systemName: name)
-                                .font(.system(size: 28))
-                                .frame(width: 56, height: 56)
-                                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: Theme.smallCornerRadius))
-                                .foregroundStyle(persistedDevice?.customIcon == name ? Color.accentColor : Color.secondary)
+                            Label(String(localized: "Reset to default icon"), systemImage: "arrow.counterclockwise")
+                                .font(.subheadline.weight(.medium))
                         }
-                        .accessibilityLabel(name)
+                        .padding(.horizontal)
+                    }
+
+                    ForEach(iconCategories) { category in
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(category.title)
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal)
+
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
+                                ForEach(category.icons, id: \.self) { name in
+                                    let isSelected = persistedDevice?.customIcon == name || (persistedDevice?.customIcon == nil && icon == name)
+                                    Button {
+                                        persistedDevice?.customIcon = name
+                                        try? context.save()
+                                        showingIconPicker = false
+                                    } label: {
+                                        ZStack(alignment: .topTrailing) {
+                                            RoundedRectangle(cornerRadius: Theme.smallCornerRadius)
+                                                .fill(isSelected ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.08))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: Theme.smallCornerRadius)
+                                                        .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                                                )
+
+                                            Image(systemName: name)
+                                                .font(.system(size: 26))
+                                                .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                                            if isSelected {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 14))
+                                                    .foregroundStyle(Color.accentColor)
+                                                    .padding(4)
+                                            }
+                                        }
+                                        .frame(height: 58)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(name)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
                     }
                 }
-                .padding()
+                .padding(.vertical)
             }
             .navigationTitle(String(localized: "Choose icon"))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(String(localized: "Cancel")) { showingIconPicker = false }

@@ -66,20 +66,50 @@ final class Device {
 
     static func inferredIcon(for hostname: String?, ip: String) -> String {
         let name = (hostname ?? "").lowercased()
-        if name.contains("apple") || name.contains("iphone") || name.contains("ipad") {
+        if name.contains("watch") {
+            return "applewatch"
+        }
+        if name.contains("homepod") {
+            return "homepod.fill"
+        }
+        if name.contains("ipad") {
+            return "ipad"
+        }
+        if name.contains("iphone") {
             return "iphone"
         }
-        if name.contains("mac") || name.contains("mbp") || name.contains("imac") {
+        if name.contains("mac") || name.contains("mbp") || name.contains("imac") || name.contains("macbook") {
             return "laptopcomputer"
         }
-        if name.contains("tv") || name.contains("apple-tv") {
+        if name.contains("tv") || name.contains("apple-tv") || name.contains("bravia") || name.contains("samsung") || name.contains("lg") {
             return "tv"
         }
-        if name.contains("printer") {
+        if name.contains("apple") {
+            return "iphone"
+        }
+        if name.contains("printer") || name.contains("brother") || name.contains("epson") || name.contains("canon") || name.contains("hp") {
             return "printer"
         }
-        if name.contains("router") || name.contains("nas") {
+        if name.contains("router") || name.contains("gateway") || name.contains("fritz") || name.contains("openwrt") {
+            return "wifi.router"
+        }
+        if name.contains("nas") || name.contains("synology") || name.contains("qnap") || name.contains("truenas") || name.contains("unraid") {
             return "server.rack"
+        }
+        if name.contains("cam") || name.contains("camera") || name.contains("nvr") || name.contains("reolink") || name.contains("hikvision") {
+            return "camera.fill"
+        }
+        if name.contains("hue") || name.contains("light") || name.contains("shelly") || name.contains("sonoff") || name.contains("tasmota") || name.contains("esphome") || name.contains("tuya") {
+            return "lightbulb.fill"
+        }
+        if name.contains("playstation") || name.contains("ps4") || name.contains("ps5") || name.contains("xbox") || name.contains("nintendo") || name.contains("switch") {
+            return "gamecontroller.fill"
+        }
+        if name.contains("speaker") || name.contains("sonos") || name.contains("bose") {
+            return "speaker.wave.2.fill"
+        }
+        if name.contains("pi") || name.contains("raspberry") {
+            return "terminal.fill"
         }
         return "desktopcomputer"
     }
