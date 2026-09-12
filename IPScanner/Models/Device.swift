@@ -99,6 +99,12 @@ final class Device {
         if name.contains("cam") || name.contains("camera") || name.contains("nvr") || name.contains("reolink") || name.contains("hikvision") {
             return "camera.fill"
         }
+        if name.contains("tapparella") || name.contains("shutter") || name.contains("blind") || name.contains("shade") || name.contains("persiana") {
+            return "roller.shade.closed"
+        }
+        if name.contains("solar") || name.contains("fotovolt") || name.contains("inverter") {
+            return "sun.max.fill"
+        }
         if name.contains("hue") || name.contains("light") || name.contains("shelly") || name.contains("sonoff") || name.contains("tasmota") || name.contains("esphome") || name.contains("tuya") {
             return "lightbulb.fill"
         }

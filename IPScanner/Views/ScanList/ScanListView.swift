@@ -7,6 +7,11 @@
 
 import SwiftUI
 import SwiftData
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 struct ScanListView: View {
     @Environment(AppState.self) private var appState
@@ -38,52 +43,15 @@ struct ScanListView: View {
                 filterPicker
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 8)
+                    .background(.bar)
                 Divider()
             }
 
-            Group {
-                if viewModel.devices.isEmpty && !viewModel.isScanning && viewModel.filterMode != .availableOnly {
-                    EmptyStateView(startScan: viewModel.startScan)
-                } else if viewModel.filterMode == .availableOnly {
-                    if viewModel.filteredAvailableIPs.isEmpty && !viewModel.searchText.isEmpty {
-                        ContentUnavailableView.search(text: viewModel.searchText)
-                    } else if viewModel.availableIPs.isEmpty {
-                        ContentUnavailableView(
-                            String(localized: "No Free IPs"),
-                            systemImage: "network.slash",
-                            description: Text(String(localized: "All IP addresses in this subnet are occupied."))
-                        )
-                    } else {
-                        availableIPsList
-                    }
-                } else {
-                    if viewModel.filteredDevices.isEmpty && !viewModel.searchText.isEmpty {
-                        ContentUnavailableView.search(text: viewModel.searchText)
-                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .onlineOnly {
-                        ContentUnavailableView(
-                            String(localized: "No Online Devices"),
-                            systemImage: "wifi.slash",
-                            description: Text(String(localized: "No active devices currently online."))
-                        )
-                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .whitelistedOnly {
-                        ContentUnavailableView(
-                            String(localized: "No Whitelisted Devices"),
-                            systemImage: "shield.slash",
-                            description: Text(String(localized: "No devices have been marked as whitelisted yet. Open device details to whitelist trusted devices."))
-                        )
-                    } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .notWhitelistedOnly {
-                        ContentUnavailableView(
-                            String(localized: "All Devices Whitelisted"),
-                            systemImage: "checkmark.shield",
-                            description: Text(String(localized: "All discovered devices are currently in your whitelist."))
-                        )
-                    } else {
-                        deviceList
-                    }
-                }
-            }
+            mainContentArea
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .searchable(
             text: $viewModel.searchText,
             prompt: Text(viewModel.filterMode == .availableOnly
@@ -98,6 +66,56 @@ struct ScanListView: View {
         .overlay(alignment: .bottom) {
             if let error = viewModel.errorMessage {
                 errorBanner(error)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var mainContentArea: some View {
+        if viewModel.devices.isEmpty && !viewModel.isScanning && viewModel.filterMode != .availableOnly {
+            EmptyStateView(startScan: viewModel.startScan)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.filterMode == .availableOnly {
+            if viewModel.filteredAvailableIPs.isEmpty && !viewModel.searchText.isEmpty {
+                ContentUnavailableView.search(text: viewModel.searchText)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.availableIPs.isEmpty {
+                ContentUnavailableView(
+                    String(localized: "No Free IPs"),
+                    systemImage: "network.slash",
+                    description: Text(String(localized: "All IP addresses in this subnet are occupied."))
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                availableIPsList
+            }
+        } else {
+            if viewModel.filteredDevices.isEmpty && !viewModel.searchText.isEmpty {
+                ContentUnavailableView.search(text: viewModel.searchText)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .onlineOnly {
+                ContentUnavailableView(
+                    String(localized: "No Online Devices"),
+                    systemImage: "wifi.slash",
+                    description: Text(String(localized: "No active devices currently online."))
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .whitelistedOnly {
+                ContentUnavailableView(
+                    String(localized: "No Whitelisted Devices"),
+                    systemImage: "shield.slash",
+                    description: Text(String(localized: "No devices have been marked as whitelisted yet. Open device details to whitelist trusted devices."))
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredDevices.isEmpty && viewModel.filterMode == .notWhitelistedOnly {
+                ContentUnavailableView(
+                    String(localized: "All Devices Whitelisted"),
+                    systemImage: "checkmark.shield",
+                    description: Text(String(localized: "All discovered devices are currently in your whitelist."))
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                deviceList
             }
         }
     }
@@ -133,6 +151,9 @@ struct ScanListView: View {
                     )
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .contextMenu {
+                    deviceContextMenu(for: device, persisted: persisted)
+                }
             }
         }
         .listStyle(.inset)
@@ -167,15 +188,12 @@ struct ScanListView: View {
                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 .contextMenu {
                     Button {
-                        #if os(iOS)
-                        UIPasteboard.general.string = ip
-                        #elseif os(macOS)
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(ip, forType: .string)
-                        #endif
+                        copyToClipboard(ip)
                     } label: {
                         Label(String(localized: "Copy IP Address"), systemImage: "doc.on.doc")
                     }
+
+                    Divider()
 
                     NavigationLink {
                         PingToolView(initialHost: ip)
@@ -188,10 +206,109 @@ struct ScanListView: View {
                     } label: {
                         Label(String(localized: "Port Scan"), systemImage: "network")
                     }
+
+                    Divider()
+
+                    Button {
+                        openURL("http://\(ip)")
+                    } label: {
+                        Label(String(localized: "Open in Browser (HTTP)"), systemImage: "safari")
+                    }
                 }
             }
         }
         .listStyle(.inset)
+    }
+
+    @ViewBuilder
+    private func deviceContextMenu(for device: ScannedDevice, persisted: Device?) -> some View {
+        Button {
+            toggleWhitelist(for: device, persisted: persisted)
+        } label: {
+            if persisted?.isWhitelisted == true {
+                Label(String(localized: "Remove from Whitelist"), systemImage: "shield.slash")
+            } else {
+                Label(String(localized: "Add to Whitelist"), systemImage: "checkmark.shield")
+            }
+        }
+
+        Divider()
+
+        Menu {
+            Button {
+                copyToClipboard(device.ip)
+            } label: {
+                Label(String(localized: "IP: \(device.ip)"), systemImage: "doc.on.doc")
+            }
+
+            if let mac = device.mac, !mac.isEmpty {
+                Button {
+                    copyToClipboard(mac)
+                } label: {
+                    Label(String(localized: "MAC: \(mac)"), systemImage: "doc.on.doc")
+                }
+            }
+
+            if let hostname = device.hostname, !hostname.isEmpty {
+                Button {
+                    copyToClipboard(hostname)
+                } label: {
+                    Label(String(localized: "Hostname: \(hostname)"), systemImage: "doc.on.doc")
+                }
+            }
+
+            if let customName = persisted?.customName, !customName.isEmpty {
+                Button {
+                    copyToClipboard(customName)
+                } label: {
+                    Label(String(localized: "Custom Name: \(customName)"), systemImage: "doc.on.doc")
+                }
+            }
+        } label: {
+            Label(String(localized: "Copy"), systemImage: "doc.on.doc")
+        }
+
+        Divider()
+
+        NavigationLink {
+            PingToolView(initialHost: device.ip)
+        } label: {
+            Label(String(localized: "Ping"), systemImage: "point.3.connected.trianglepath.dotted")
+        }
+
+        NavigationLink {
+            PortScanToolView(initialHost: device.ip)
+        } label: {
+            Label(String(localized: "Port Scan"), systemImage: "network")
+        }
+
+        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+            Button {
+                sendWakeOnLAN(mac: mac)
+            } label: {
+                Label(String(localized: "Wake on LAN"), systemImage: "bolt.fill")
+            }
+        }
+
+        Divider()
+
+        Button {
+            openURL("http://\(device.ip)")
+        } label: {
+            Label(String(localized: "Open in Browser (HTTP)"), systemImage: "safari")
+        }
+
+        Button {
+            openURL("https://\(device.ip)")
+        } label: {
+            Label(String(localized: "Open in Browser (HTTPS)"), systemImage: "lock.safari")
+        }
+
+        Button {
+            openURL("vnc://\(device.ip)")
+        } label: {
+            Label(String(localized: "Open VNC"), systemImage: "display")
+        }
     }
 
     @ViewBuilder
@@ -407,5 +524,56 @@ struct ScanListView: View {
             .background(Color.red.opacity(0.9), in: Capsule())
             .padding(.bottom, 12)
             .accessibilityLabel(message)
+    }
+
+    // MARK: - Context Menu Helpers
+
+    private func toggleWhitelist(for device: ScannedDevice, persisted: Device?) {
+        if let persisted {
+            persisted.isWhitelisted.toggle()
+            try? context.save()
+        } else {
+            let mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let hasValidMAC = ARPTableService.isValidMAC(mac)
+            let newDevice = Device(
+                ipAddress: device.ip,
+                macAddress: hasValidMAC ? mac : device.mac,
+                hostname: device.hostname,
+                vendor: device.vendor,
+                customName: nil,
+                customIcon: nil,
+                isWhitelisted: true,
+                firstSeen: device.firstSeen,
+                lastSeen: device.lastSeen,
+                isOnline: device.isOnline
+            )
+            context.insert(newDevice)
+            try? context.save()
+        }
+    }
+
+    private func copyToClipboard(_ text: String) {
+        #if os(iOS)
+        UIPasteboard.general.string = text
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
+    }
+
+    private func openURL(_ string: String) {
+        guard let url = URL(string: string) else { return }
+        #if os(iOS)
+        UIApplication.shared.open(url)
+        #else
+        NSWorkspace.shared.open(url)
+        #endif
+    }
+
+    private func sendWakeOnLAN(mac: String) {
+        let service = WakeOnLANService()
+        Task {
+            try? await service.sendWake(mac: mac)
+        }
     }
 }

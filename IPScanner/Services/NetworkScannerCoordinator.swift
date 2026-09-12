@@ -167,6 +167,11 @@ public actor NetworkScannerCoordinator {
                             group.addTask {
                                 await semaphore.wait()
                                 defer { semaphore.signal() }
+                                let pingRetry = await pingService.ping(host: ip)
+                                if pingRetry.succeeded {
+                                    let vendor = await oui.vendorName(forMAC: mac)
+                                    return (ip, mac, vendor)
+                                }
                                 guard await PortScanService.isHostReachable(host: ip, timeout: 0.35) else {
                                     return nil
                                 }

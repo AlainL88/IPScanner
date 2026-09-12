@@ -67,17 +67,17 @@ struct DeviceRowView: View {
 
     private var titleFontSize: CGFloat {
         switch density {
-        case .compact: return 16
-        case .comfortable: return 17.5
-        case .spacious: return 19
+        case .compact: return 13.5
+        case .comfortable: return 14.5
+        case .spacious: return 16
         }
     }
 
     private var subtitleFontSize: CGFloat {
         switch density {
-        case .compact: return 13.5
-        case .comfortable: return 14
-        case .spacious: return 15
+        case .compact: return 11.5
+        case .comfortable: return 12
+        case .spacious: return 13
         }
     }
 
@@ -218,22 +218,22 @@ struct DeviceRowView: View {
     private var iconBadge: some View {
         let size: CGFloat = {
             switch density {
-            case .compact: return 36
-            case .comfortable: return 44
-            case .spacious: return 50
+            case .compact: return 30
+            case .comfortable: return 36
+            case .spacious: return 42
             }
         }()
 
         let symbolSize: CGFloat = {
             switch density {
-            case .compact: return 18
-            case .comfortable: return 22
-            case .spacious: return 26
+            case .compact: return 15
+            case .comfortable: return 18
+            case .spacious: return 21
             }
         }()
 
         return ZStack {
-            RoundedRectangle(cornerRadius: density == .compact ? 8 : 10)
+            RoundedRectangle(cornerRadius: density == .compact ? 6 : 8)
                 .fill(Color.accentColor.opacity(0.12))
             Image(systemName: icon)
                 .font(.system(size: symbolSize, weight: .medium))
@@ -246,7 +246,7 @@ struct DeviceRowView: View {
     private var statusIndicator: some View {
         Circle()
             .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
-            .frame(width: 10, height: 10)
+            .frame(width: 8, height: 8)
             .overlay(
                 Circle()
                     .stroke(Color.primary.opacity(0.12), lineWidth: 1)

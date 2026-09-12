@@ -423,9 +423,11 @@ struct DeviceDetailView: View {
                     "sensor.fill",
                     "thermometer.medium",
                     "lock.fill",
+                    "roller.shade.closed",
+                    "blinds.horizontal.closed",
                     "fan.fill",
                     "air.purifier.fill",
-                    "solarpanels.fill",
+                    "sun.max.fill",
                     "ev.charger.fill"
                 ]
             ),
