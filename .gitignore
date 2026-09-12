@@ -36,6 +36,9 @@ Pods/
 # Memory plugin
 .remember/
 
+# Impeccable skill cache
+.impeccable/
+
 # Firebase / Google
 # I GoogleService-Info.plist reali NON vanno MAI committati (vedi README).
 # Un contributore può aggiungere il proprio file per abilitare Crashlytics.
