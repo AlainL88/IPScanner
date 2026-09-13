@@ -285,4 +285,45 @@ final class ScanViewModelTests: XCTestCase {
         XCTAssertEqual(persistedLoopback.isOnline, true)
         XCTAssertEqual(persistedDead.isOnline, false)
     }
+
+    func testDeviceIPChangeDeduplicationInDevices() {
+        // Initial state: device at .54 with MAC DE:AD:BE:EF:00:01
+        let original = ScannedDevice(
+            id: "192.168.1.54",
+            ip: "192.168.1.54",
+            mac: "DE:AD:BE:EF:00:01",
+            hostname: "sensor-bedroom.local",
+            vendor: "Espressif",
+            firstSeen: Date().addingTimeInterval(-3600),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: true,
+            isNew: false
+        )
+        viewModel.devices = [original]
+
+        // Device changes IP to .52 and appears with the same MAC
+        let moved = ScannedDevice(
+            id: "192.168.1.52",
+            ip: "192.168.1.52",
+            mac: "de:ad:be:ef:00:01", // case-insensitive check
+            hostname: "sensor-bedroom.local",
+            vendor: "Espressif",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: false
+        )
+
+        // Simulate incoming scanned device update
+        // We can test filteredDevices or direct scan upsert behavior
+        DeviceStore.upsert(original, in: context)
+        DeviceStore.upsert(moved, in: context)
+        try? context.save()
+
+        let persisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+        // There should be only 1 persisted record, at .52
+        XCTAssertEqual(persisted.count, 1)
+        XCTAssertEqual(persisted.first?.ipAddress, "192.168.1.52")
+        XCTAssertEqual(persisted.first?.macAddress, "de:ad:be:ef:00:01")
+    }
 }

@@ -136,27 +136,9 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 2. ARP Table check:
-                // Enrich already detected devices with MAC and Vendor from the ARP cache.
-                // Also captures any active hosts (e.g. firewalled or IoT devices) that replied to Layer 2 ARP.
-                continuation.yield(.phase(.arpReading))
-                let arpEntries = ARPTableService.read()
-                let targetARPEntries = arpEntries.filter { entry in
-                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return false }
-                    return targetIPSet.contains(entry.ipAddress)
-                }
-
-                for entry in targetARPEntries {
-                    guard let mac = entry.macAddress else { continue }
-                    let ip = entry.ipAddress
-                    let vendor = await oui.vendorName(forMAC: mac)
-                    let device = store.update(ip: ip, mac: mac, vendor: vendor)
-                    continuation.yield(.device(device))
-                }
-
-                // 2b. Fast TCP probe fallback for hosts that did not respond to ICMP ping (e.g. firewalled cameras/IoT)
-                let discoveredIPs = Set(store.all().map(\.ip))
-                let remainingIPs = targetAddressStrings.filter { !discoveredIPs.contains($0) }
+                // 2. Fast TCP probe fallback for hosts that did not respond to ICMP ping (e.g. firewalled cameras/IoT)
+                let pingDiscoveredIPs = Set(store.all().map(\.ip))
+                let remainingIPs = targetAddressStrings.filter { !pingDiscoveredIPs.contains($0) }
                 if !remainingIPs.isEmpty {
                     await withTaskGroup(of: String?.self) { group in
                         for ip in remainingIPs {
@@ -184,15 +166,61 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 3. Bonjour / mDNS discovery:
+                // 3. ARP Table enrichment:
+                // Enrich all verified active devices in store with MAC and Vendor from the ARP cache.
+                // Note: We do NOT blindly add unverified stale ARP cache entries as online devices.
+                continuation.yield(.phase(.arpReading))
+                let arpEntries = ARPTableService.read()
+                let arpMap = Dictionary(arpEntries.compactMap { entry -> (String, String)? in
+                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
+                    return (entry.ipAddress, mac)
+                }, uniquingKeysWith: { first, _ in first })
+
+                for dev in store.all() {
+                    let mac = dev.mac ?? arpMap[dev.ip]
+                    if let mac, ARPTableService.isValidMAC(mac) {
+                        let vendor: String?
+                        if let existingVendor = dev.vendor {
+                            vendor = existingVendor
+                        } else {
+                            vendor = await oui.vendorName(forMAC: mac)
+                        }
+                        let updated = store.update(ip: dev.ip, mac: mac, vendor: vendor)
+                        continuation.yield(.device(updated))
+                    }
+                }
+
+                guard !Task.isCancelled else {
+                    bonjourTask.cancel()
+                    continuation.finish()
+                    return
+                }
+
+                // 4. Bonjour / mDNS discovery:
                 // Resolves hostnames for detected devices and discovers mDNS-broadcasting hosts.
                 if includeBonjour {
                     continuation.yield(.phase(.bonjourDiscovery))
                     let bonjourHostnames = await bonjourTask.value
                     for (ip, hostname) in bonjourHostnames {
                         if targetIPSet.contains(ip) {
-                            let device = store.update(ip: ip, hostname: hostname)
-                            continuation.yield(.device(device))
+                            if store.get(ip) != nil {
+                                let device = store.update(ip: ip, hostname: hostname)
+                                continuation.yield(.device(device))
+                            } else {
+                                let isPingOnline = (await pingService.ping(host: ip, retries: 1, timeout: 0.5)).succeeded
+                                let isTcpOnline = isPingOnline ? false : await PortScanService.isHostReachable(host: ip, timeout: 0.3)
+                                if isPingOnline || isTcpOnline {
+                                    let mac = ARPTableService.macAddress(for: ip)
+                                    let vendor: String?
+                                    if let mac, ARPTableService.isValidMAC(mac) {
+                                        vendor = await oui.vendorName(forMAC: mac)
+                                    } else {
+                                        vendor = nil
+                                    }
+                                    let device = store.update(ip: ip, mac: mac, hostname: hostname, vendor: vendor)
+                                    continuation.yield(.device(device))
+                                }
+                            }
                         }
                     }
                 }
@@ -282,6 +310,17 @@ private final class DiscoveredDevicesStore: @unchecked Sendable {
         let finalMAC = (mac != nil && ARPTableService.isValidMAC(mac)) ? mac : (existing?.mac)
         let finalHostname = (hostname != nil && !hostname!.isEmpty) ? hostname : (existing?.hostname)
         let finalVendor = (vendor != nil && !vendor!.isEmpty) ? vendor : (existing?.vendor)
+
+        // Deduplicate: if another IP in store had the same valid MAC, remove the older entry
+        if let finalMAC, ARPTableService.isValidMAC(finalMAC) {
+            let staleIPs = devices.compactMap { (key, value) -> String? in
+                guard key != ip, let existingMAC = value.mac, ARPTableService.isValidMAC(existingMAC) else { return nil }
+                return existingMAC.caseInsensitiveCompare(finalMAC) == .orderedSame ? key : nil
+            }
+            for staleIP in staleIPs {
+                devices.removeValue(forKey: staleIP)
+            }
+        }
 
         let device = ScannedDevice(
             id: ip,

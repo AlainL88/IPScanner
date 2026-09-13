@@ -268,8 +268,8 @@ final class ScanViewModel {
         statusRefreshTask = nil
     }
 
-    /// Quickly checks reachable status (ICMP ping with retry + TCP probe + Layer 2 ARP cache) for all currently known devices,
-    /// and auto-discovers newly connected devices appearing on the network in real-time.
+    /// Quickly checks reachable status (ICMP ping with retry + TCP probe) for all currently known devices,
+    /// and auto-discovers newly connected or migrated devices appearing on the network in real-time.
     func refreshDeviceStatuses() async {
         guard !isScanning, !isRefreshingStatus else { return }
         isRefreshingStatus = true
@@ -295,10 +295,7 @@ final class ScanViewModel {
                         if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
                             return (ip, true)
                         }
-                        // 3. Layer 2 ARP cache check: verify if the device has a valid MAC entry in the local ARP table
-                        if let mac = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(mac) {
-                            return (ip, true)
-                        }
+                        // Stale passive ARP cache entries are NOT used as liveness proof
                         return (ip, false)
                     }
                 }
@@ -355,16 +352,17 @@ final class ScanViewModel {
             }
         }
 
-        // 2. Auto-discover new devices appearing on the network in real-time
+        // 2. Auto-discover new or migrated devices appearing on the network in real-time
         if let cidr = targetCIDR() {
             let targetIPSet = Set(IPv4CIDR.hostAddresses(cidr).map(\.description))
-            let currentIPSet = Set(devices.map(\.ip))
+            let currentActiveIPSet = Set(devices.filter(\.isOnline).map(\.ip))
             let arpEntries = ARPTableService.read().filter { entry in
                 guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return false }
-                return targetIPSet.contains(entry.ipAddress) && !currentIPSet.contains(entry.ipAddress)
+                return targetIPSet.contains(entry.ipAddress) && !currentActiveIPSet.contains(entry.ipAddress)
             }
 
             if !arpEntries.isEmpty {
+                let pingService = PingService(timeout: 1.2)
                 let oui = OUILookupService()
                 let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
                 let knownPersistedIPs = Set(allPersisted.map(\.ipAddress))
@@ -376,6 +374,17 @@ final class ScanViewModel {
                 for entry in arpEntries {
                     guard let mac = entry.macAddress else { continue }
                     let ip = entry.ipAddress
+
+                    // Liveness verification: verify that the IP actively responds to ICMP or TCP
+                    let pingResult = await pingService.ping(host: ip, retries: 1, timeout: 1.0)
+                    let isReachable: Bool
+                    if pingResult.succeeded {
+                        isReachable = true
+                    } else {
+                        isReachable = await PortScanService.isHostReachable(host: ip, timeout: 0.4)
+                    }
+                    guard isReachable else { continue }
+
                     let vendor = await oui.vendorName(forMAC: mac)
                     let hostname = DNSResolver.reverseLookup(ip: ip)
                     let isBrandNew = !knownPersistedIPs.contains(ip) && !knownPersistedMACs.contains(mac.uppercased())
@@ -390,7 +399,7 @@ final class ScanViewModel {
                         isOnline: true,
                         isNew: isBrandNew
                     )
-                    devices.append(newDevice)
+                    upsertScannedDevice(newDevice, into: &devices)
                     DeviceStore.upsert(newDevice, in: context)
                     if isBrandNew && appState.notificationsEnabled {
                         Task { await NotificationService.shared.notifyNewDevice(newDevice) }
@@ -399,6 +408,68 @@ final class ScanViewModel {
                 try? context.save()
             }
         }
+    }
+
+    private func upsertScannedDevice(_ incoming: ScannedDevice, into list: inout [ScannedDevice]) {
+        let mac = incoming.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasValidMAC = ARPTableService.isValidMAC(mac)
+        let hostname = incoming.hostname?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasDistinctHost = isDistinctHostname(hostname)
+
+        var matchIndex: Int?
+        // 1. Match by valid MAC address (authoritative, survives IP changes)
+        if hasValidMAC, let mac {
+            matchIndex = list.firstIndex(where: {
+                guard let existingMAC = $0.mac else { return false }
+                return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
+            })
+        }
+        // 2. Fallback match by distinct hostname (for iOS where MAC is restricted)
+        if matchIndex == nil, hasDistinctHost, let hostname {
+            matchIndex = list.firstIndex(where: {
+                guard let existingHost = $0.hostname, isDistinctHostname(existingHost) else { return false }
+                return existingHost.caseInsensitiveCompare(hostname) == .orderedSame
+            })
+        }
+        // 3. Fallback match by IP address
+        if matchIndex == nil {
+            matchIndex = list.firstIndex(where: { $0.ip == incoming.ip })
+        }
+
+        if let index = matchIndex {
+            let old = list[index]
+            // If device changed its IP address, purge any other stale entry in list at incoming.ip
+            if old.ip != incoming.ip {
+                list.removeAll(where: { $0.ip == incoming.ip && $0.id != old.id })
+            }
+            let merged = ScannedDevice(
+                id: incoming.id,
+                ip: incoming.ip,
+                mac: (hasValidMAC ? mac : nil) ?? incoming.mac ?? old.mac,
+                hostname: (incoming.hostname?.isEmpty == false ? incoming.hostname : nil) ?? old.hostname,
+                vendor: (incoming.vendor?.isEmpty == false ? incoming.vendor : nil) ?? old.vendor,
+                firstSeen: old.firstSeen,
+                lastSeen: incoming.lastSeen,
+                isOnline: incoming.isOnline,
+                isNew: old.isNew
+            )
+            if let targetIndex = list.firstIndex(where: { $0.id == old.id || (hasValidMAC && $0.mac?.caseInsensitiveCompare(mac!) == .orderedSame) }) {
+                list[targetIndex] = merged
+            } else {
+                list.append(merged)
+            }
+        } else {
+            list.removeAll(where: { $0.ip == incoming.ip })
+            list.append(incoming)
+        }
+    }
+
+    private func isDistinctHostname(_ host: String?) -> Bool {
+        guard let host, !host.isEmpty else { return false }
+        let lower = host.lowercased()
+        let generic = ["localhost", "unknown", "broadcasthost", "local"]
+        if generic.contains(lower) { return false }
+        return true
     }
 
     private func isDeviceNew(_ device: ScannedDevice) -> Bool {
@@ -438,42 +509,8 @@ final class ScanViewModel {
             case .device(let incoming):
                 var device = incoming
                 device.isNew = isDeviceNew(device)
-
-                if let index = devices.firstIndex(where: { $0.ip == device.ip }) {
-                    let old = devices[index]
-                    let merged = ScannedDevice(
-                        id: device.id,
-                        ip: device.ip,
-                        mac: device.mac ?? old.mac,
-                        hostname: device.hostname ?? old.hostname,
-                        vendor: device.vendor ?? old.vendor,
-                        firstSeen: old.firstSeen,
-                        lastSeen: device.lastSeen,
-                        isOnline: device.isOnline,
-                        isNew: old.isNew
-                    )
-                    devices[index] = merged
-                } else {
-                    devices.append(device)
-                }
-
-                if let rIndex = responders.firstIndex(where: { $0.ip == device.ip }) {
-                    let old = responders[rIndex]
-                    let merged = ScannedDevice(
-                        id: device.id,
-                        ip: device.ip,
-                        mac: device.mac ?? old.mac,
-                        hostname: device.hostname ?? old.hostname,
-                        vendor: device.vendor ?? old.vendor,
-                        firstSeen: old.firstSeen,
-                        lastSeen: device.lastSeen,
-                        isOnline: device.isOnline,
-                        isNew: old.isNew
-                    )
-                    responders[rIndex] = merged
-                } else {
-                    responders.append(device)
-                }
+                upsertScannedDevice(device, into: &devices)
+                upsertScannedDevice(device, into: &responders)
             case .completed(let summary):
                 lastScanSummary = summary
             }

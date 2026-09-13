@@ -27,10 +27,17 @@ enum DeviceStore {
 
         // 1. Match by authoritative MAC address (primary, stable across DHCP changes)
         if hasValidMAC, let mac {
-            targetDevice = allDevices.first(where: {
+            let matching = allDevices.filter {
                 guard let existingMAC = $0.macAddress else { return false }
                 return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
-            })
+            }
+            if let first = matching.first {
+                targetDevice = first
+                // Clean up any extraneous duplicates with the same MAC
+                for duplicate in matching.dropFirst() {
+                    context.delete(duplicate)
+                }
+            }
         }
 
         // 2. Match by distinct Hostname / mDNS / Bonjour (useful on iOS when MAC is restricted)
@@ -70,6 +77,18 @@ enum DeviceStore {
         }
 
         if let existing = targetDevice {
+            // If the device migrated to a new IP address, resolve any conflicting record at the new IP
+            if existing.ipAddress != device.ip {
+                let ipCollisions = allDevices.filter { $0.persistentModelID != existing.persistentModelID && $0.ipAddress == device.ip }
+                for collision in ipCollisions {
+                    if collision.macAddress == nil || collision.macAddress?.isEmpty == true {
+                        context.delete(collision)
+                    } else {
+                        collision.isOnline = false
+                    }
+                }
+            }
+
             existing.ipAddress = device.ip
             if hasValidMAC, let mac {
                 existing.macAddress = mac
@@ -83,6 +102,16 @@ enum DeviceStore {
             existing.lastSeen = device.lastSeen
             existing.isOnline = device.isOnline
         } else {
+            // Clean up any stale records without MAC at device.ip before inserting
+            let ipCollisions = allDevices.filter { $0.ipAddress == device.ip }
+            for collision in ipCollisions {
+                if collision.macAddress == nil || collision.macAddress?.isEmpty == true {
+                    context.delete(collision)
+                } else {
+                    collision.isOnline = false
+                }
+            }
+
             context.insert(
                 Device(
                     ipAddress: device.ip,
