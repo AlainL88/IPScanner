@@ -58,15 +58,11 @@ public actor PingService {
     ) async -> [PingResult] {
         let semaphore = AsyncSemaphore(count: concurrency)
         return await withTaskGroup(of: PingResult.self) { group in
-            var ordered = [PingResult?](repeating: nil, count: addresses.count)
-            var index = 0
             for address in addresses {
-                let current = index
-                index += 1
                 group.addTask { [self] in
                     await semaphore.wait()
                     defer { semaphore.signal() }
-                    let result = await self.ping(host: address)
+                    let result = await self.ping(host: address, retries: 1)
                     onResult(result)
                     return result
                 }

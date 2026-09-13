@@ -483,6 +483,18 @@ struct ScanListView: View {
 
         ToolbarItem(placement: .automatic) {
             Menu {
+                #if os(macOS)
+                Button {
+                    exportData(format: .csv)
+                } label: {
+                    Label(String(localized: "Export CSV"), systemImage: "doc.text")
+                }
+                Button {
+                    exportData(format: .json)
+                } label: {
+                    Label(String(localized: "Export JSON"), systemImage: "curlybraces")
+                }
+                #else
                 if let csvURL = exportURL(.csv) {
                     ShareLink(item: csvURL, preview: SharePreview(String(localized: "Export CSV"))) {
                         Label(String(localized: "Export CSV"), systemImage: "doc.text")
@@ -493,6 +505,7 @@ struct ScanListView: View {
                         Label(String(localized: "Export JSON"), systemImage: "curlybraces")
                     }
                 }
+                #endif
                 Button(String(localized: "Send by email")) {
                     let data: Data
                     let filename: String
@@ -519,6 +532,21 @@ struct ScanListView: View {
     }
 
     private var selectedFormat: ExportFormat { .csv }
+
+    #if os(macOS)
+    private func exportData(format: ExportFormat) {
+        let data: Data
+        let filename: String
+        if viewModel.filterMode == .availableOnly {
+            data = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: format)
+            filename = "ipscanner-free-ips.\(format.fileExtension)"
+        } else {
+            data = ExportService.data(for: viewModel.devices, format: format)
+            filename = "ipscanner-scan.\(format.fileExtension)"
+        }
+        FileExporter.save(suggestedFileName: filename, data: data, contentType: format.utType)
+    }
+    #endif
 
     private func exportURL(_ format: ExportFormat) -> URL? {
         let data: Data

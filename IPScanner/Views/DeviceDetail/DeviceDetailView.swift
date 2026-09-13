@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 #if os(iOS)
 import UIKit
 #endif
@@ -253,6 +254,11 @@ struct DeviceDetailView: View {
             actionButton(String(localized: "Wake on LAN"), systemImage: "bolt.fill") {
                 wake()
             }
+            #if os(macOS)
+            actionButton(String(localized: "Export"), systemImage: "square.and.arrow.up") {
+                exportDevice()
+            }
+            #else
             ShareLink(
                 item: deviceShareURL,
                 preview: SharePreview(String(localized: "Export"))
@@ -260,6 +266,7 @@ struct DeviceDetailView: View {
                 actionButtonLabel(String(localized: "Export"), systemImage: "square.and.arrow.up")
             }
             .buttonStyle(.plain)
+            #endif
         }
     }
 
@@ -553,6 +560,14 @@ struct DeviceDetailView: View {
     private var displayName: String {
         persistedDevice?.customName ?? device.hostname ?? device.ip
     }
+
+    #if os(macOS)
+    private func exportDevice() {
+        let json = ExportService.jsonString(for: [device])
+        let filename = "device-\(device.ip).json"
+        FileExporter.save(suggestedFileName: filename, data: Data(json.utf8), contentType: .json)
+    }
+    #endif
 
     private var deviceShareURL: URL {
         let json = ExportService.jsonString(for: [device])

@@ -79,12 +79,25 @@ private struct SessionDetailView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
+                        #if os(macOS)
+                        Button {
+                            exportSession(format: .csv)
+                        } label: {
+                            Label(String(localized: "Export CSV"), systemImage: "doc.text")
+                        }
+                        Button {
+                            exportSession(format: .json)
+                        } label: {
+                            Label(String(localized: "Export JSON"), systemImage: "curlybraces")
+                        }
+                        #else
                         ShareLink(item: exportURL(.csv), preview: SharePreview(String(localized: "Export CSV"))) {
                             Label(String(localized: "Export CSV"), systemImage: "doc.text")
                         }
                         ShareLink(item: exportURL(.json), preview: SharePreview(String(localized: "Export JSON"))) {
                             Label(String(localized: "Export JSON"), systemImage: "curlybraces")
                         }
+                        #endif
                     } label: {
                         Label(String(localized: "Export"), systemImage: "square.and.arrow.up")
                     }
@@ -92,6 +105,30 @@ private struct SessionDetailView: View {
             }
         }
     }
+
+    #if os(macOS)
+    private func exportSession(format: ExportFormat) {
+        let devices = session.deviceSnapshots.map { snapshot in
+            ScannedDevice(
+                id: snapshot.ip,
+                ip: snapshot.ip,
+                mac: snapshot.mac,
+                hostname: snapshot.hostname,
+                vendor: snapshot.vendor,
+                firstSeen: snapshot.lastSeen,
+                lastSeen: snapshot.lastSeen,
+                isOnline: snapshot.isOnline,
+                isNew: false
+            )
+        }
+        let data = ExportService.data(for: devices, format: format)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd-HHmmss"
+        let dateString = dateFormatter.string(from: session.startedAt)
+        let filename = "ipscanner-session-\(dateString).\(format.fileExtension)"
+        FileExporter.save(suggestedFileName: filename, data: data, contentType: format.utType)
+    }
+    #endif
 
     private func exportURL(_ format: ExportFormat) -> URL {
         let devices = session.deviceSnapshots.map { snapshot in

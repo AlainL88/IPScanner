@@ -109,7 +109,7 @@ public actor NetworkScannerCoordinator {
                 }
 
                 // 1. Concurrent ICMP ping sweep with immediate streaming as IPs respond.
-                _ = await pingService.pingSweep(addresses: targetAddressStrings, concurrency: 48) { result in
+                _ = await pingService.pingSweep(addresses: targetAddressStrings, concurrency: 32) { result in
                     let done = progress.increment()
                     continuation.yield(.phase(.pinging(completed: done, total: total)))
 
@@ -152,6 +152,30 @@ public actor NetworkScannerCoordinator {
                     let vendor = await oui.vendorName(forMAC: mac)
                     let device = store.update(ip: ip, mac: mac, vendor: vendor)
                     continuation.yield(.device(device))
+                }
+
+                // 2b. Fast TCP probe fallback for hosts that did not respond to ICMP ping (e.g. firewalled cameras/IoT)
+                let discoveredIPs = Set(store.all().map(\.ip))
+                let remainingIPs = targetAddressStrings.filter { !discoveredIPs.contains($0) }
+                if !remainingIPs.isEmpty {
+                    await withTaskGroup(of: String?.self) { group in
+                        for ip in remainingIPs {
+                            group.addTask {
+                                if await PortScanService.isHostReachable(host: ip, timeout: 0.3) {
+                                    return ip
+                                }
+                                return nil
+                            }
+                        }
+                        for await activeIP in group {
+                            if let activeIP {
+                                let mac = ARPTableService.macAddress(for: activeIP)
+                                let vendor = (mac != nil && ARPTableService.isValidMAC(mac)) ? await oui.vendorName(forMAC: mac!) : nil
+                                let device = store.update(ip: activeIP, mac: mac, vendor: vendor)
+                                continuation.yield(.device(device))
+                            }
+                        }
+                    }
                 }
 
                 guard !Task.isCancelled else {

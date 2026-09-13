@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#endif
 
 public enum ExportFormat: String, CaseIterable, Sendable, Identifiable {
     case csv
@@ -19,6 +23,13 @@ public enum ExportFormat: String, CaseIterable, Sendable, Identifiable {
         switch self {
         case .csv: return "text/csv"
         case .json: return "application/json"
+        }
+    }
+
+    public var utType: UTType {
+        switch self {
+        case .csv: return .commaSeparatedText
+        case .json: return .json
         }
     }
 }
@@ -101,3 +112,30 @@ public enum ExportService {
         return field
     }
 }
+
+#if os(macOS)
+@MainActor
+public enum FileExporter {
+    public static func save(suggestedFileName: String, data: Data, contentType: UTType) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = suggestedFileName
+        panel.allowedContentTypes = [contentType]
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+
+        let targetWindow = NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first(where: { $0.isVisible })
+        if let targetWindow {
+            panel.beginSheetModal(for: targetWindow) { response in
+                if response == .OK, let targetURL = panel.url {
+                    try? data.write(to: targetURL)
+                }
+            }
+        } else {
+            let response = panel.runModal()
+            if response == .OK, let targetURL = panel.url {
+                try? data.write(to: targetURL)
+            }
+        }
+    }
+}
+#endif
