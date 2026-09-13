@@ -21,5 +21,10 @@ struct IPScannerApp: App {
             RootView()
         }
         .modelContainer(PersistenceController.container)
+        #if os(macOS)
+        .commands {
+            FileMenuCommands()
+        }
+        #endif
     }
 }

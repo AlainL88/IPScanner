@@ -77,6 +77,21 @@ struct ScanListView: View {
         .refreshable {
             await viewModel.refreshDeviceStatuses()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .exportScanCSV)) { _ in
+            #if os(macOS)
+            exportData(format: .csv)
+            #endif
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .exportScanJSON)) { _ in
+            #if os(macOS)
+            exportData(format: .json)
+            #endif
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .shareScanResults)) { _ in
+            #if os(macOS)
+            shareData()
+            #endif
+        }
     }
 
     @ViewBuilder
@@ -481,20 +496,9 @@ struct ScanListView: View {
             .accessibilityLabel(String(localized: "View options"))
         }
 
+        #if os(iOS)
         ToolbarItem(placement: .automatic) {
             Menu {
-                #if os(macOS)
-                Button {
-                    exportData(format: .csv)
-                } label: {
-                    Label(String(localized: "Export CSV"), systemImage: "doc.text")
-                }
-                Button {
-                    exportData(format: .json)
-                } label: {
-                    Label(String(localized: "Export JSON"), systemImage: "curlybraces")
-                }
-                #else
                 if let csvURL = exportURL(.csv) {
                     ShareLink(item: csvURL, preview: SharePreview(String(localized: "Export CSV"))) {
                         Label(String(localized: "Export CSV"), systemImage: "doc.text")
@@ -505,16 +509,15 @@ struct ScanListView: View {
                         Label(String(localized: "Export JSON"), systemImage: "curlybraces")
                     }
                 }
-                #endif
                 Button(String(localized: "Send by email")) {
                     let data: Data
                     let filename: String
                     if viewModel.filterMode == .availableOnly {
                         data = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: .csv)
-                        filename = "ipscanner-free-ips.\(selectedFormat.fileExtension)"
+                        filename = "ipscanner-free-ips.csv"
                     } else {
                         data = ExportService.data(for: viewModel.devices, format: .csv)
-                        filename = "ipscanner-scan.\(selectedFormat.fileExtension)"
+                        filename = "ipscanner-scan.csv"
                     }
                     EmailService.compose(
                         subject: "IPScanner scan results",
@@ -529,6 +532,7 @@ struct ScanListView: View {
             }
             .accessibilityLabel(String(localized: "Export"))
         }
+        #endif
     }
 
     private var selectedFormat: ExportFormat { .csv }
@@ -545,6 +549,38 @@ struct ScanListView: View {
             filename = "ipscanner-scan.\(format.fileExtension)"
         }
         FileExporter.save(suggestedFileName: filename, data: data, contentType: format.utType)
+    }
+
+    private func shareData() {
+        let data: Data
+        let filename: String
+        if viewModel.filterMode == .availableOnly {
+            data = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: .csv)
+            filename = "ipscanner-free-ips.csv"
+        } else {
+            data = ExportService.data(for: viewModel.devices, format: .csv)
+            filename = "ipscanner-scan.csv"
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        try? data.write(to: url)
+
+        let jsonData: Data
+        let jsonFilename: String
+        if viewModel.filterMode == .availableOnly {
+            jsonData = ExportService.availableIPsData(for: viewModel.availableIPs, cidr: viewModel.currentCIDR ?? "", format: .json)
+            jsonFilename = "ipscanner-free-ips.json"
+        } else {
+            jsonData = ExportService.data(for: viewModel.devices, format: .json)
+            jsonFilename = "ipscanner-scan.json"
+        }
+        let jsonURL = FileManager.default.temporaryDirectory.appendingPathComponent(jsonFilename)
+        try? jsonData.write(to: jsonURL)
+
+        let picker = NSSharingServicePicker(items: [url, jsonURL])
+        if let window = NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first(where: { $0.isVisible }),
+           let contentView = window.contentView {
+            picker.show(relativeTo: contentView.bounds, of: contentView, preferredEdge: .minY)
+        }
     }
     #endif
 
