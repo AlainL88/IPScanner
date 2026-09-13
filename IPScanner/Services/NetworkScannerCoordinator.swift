@@ -101,7 +101,7 @@ public actor NetworkScannerCoordinator {
                 let targetAddressStrings = addresses.map(\.description)
                 let targetIPSet = Set(targetAddressStrings)
                 let oui = OUILookupService()
-                let pingService = PingService(timeout: 1.0)
+                let pingService = PingService(timeout: 1.2)
                 let bonjour = BonjourDiscoveryService()
                 let bonjourTask = Task { () -> [String: String] in
                     guard includeBonjour else { return [:] }
@@ -138,54 +138,20 @@ public actor NetworkScannerCoordinator {
 
                 // 2. ARP Table check:
                 // Enrich already detected devices with MAC and Vendor from the ARP cache.
-                // For unpinged hosts found in the ARP table, probe them with a quick TCP check
-                // to distinguish truly active hosts (e.g. stealth firewalls) from stale/ghost cache entries.
+                // Also captures any active hosts (e.g. firewalled or IoT devices) that replied to Layer 2 ARP.
                 continuation.yield(.phase(.arpReading))
                 let arpEntries = ARPTableService.read()
-                let unconfirmedEntries = arpEntries.filter { entry in
+                let targetARPEntries = arpEntries.filter { entry in
                     guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return false }
-                    return targetIPSet.contains(entry.ipAddress) && store.get(entry.ipAddress) == nil
+                    return targetIPSet.contains(entry.ipAddress)
                 }
 
-                // 2a. Enrich already discovered hosts immediately:
-                for entry in arpEntries {
-                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { continue }
-                    if store.get(entry.ipAddress) != nil {
-                        let vendor = await oui.vendorName(forMAC: mac)
-                        let device = store.update(ip: entry.ipAddress, mac: mac, vendor: vendor)
-                        continuation.yield(.device(device))
-                    }
-                }
-
-                // 2b. Verify unconfirmed ARP cache entries concurrently:
-                if !unconfirmedEntries.isEmpty {
-                    let semaphore = AsyncSemaphore(count: 16)
-                    await withTaskGroup(of: (String, String, String?)?.self) { group in
-                        for entry in unconfirmedEntries {
-                            guard let mac = entry.macAddress else { continue }
-                            let ip = entry.ipAddress
-                            group.addTask {
-                                await semaphore.wait()
-                                defer { semaphore.signal() }
-                                let pingRetry = await pingService.ping(host: ip)
-                                if pingRetry.succeeded {
-                                    let vendor = await oui.vendorName(forMAC: mac)
-                                    return (ip, mac, vendor)
-                                }
-                                guard await PortScanService.isHostReachable(host: ip, timeout: 0.35) else {
-                                    return nil
-                                }
-                                let vendor = await oui.vendorName(forMAC: mac)
-                                return (ip, mac, vendor)
-                            }
-                        }
-                        for await result in group {
-                            if let (ip, mac, vendor) = result {
-                                let device = store.update(ip: ip, mac: mac, vendor: vendor)
-                                continuation.yield(.device(device))
-                            }
-                        }
-                    }
+                for entry in targetARPEntries {
+                    guard let mac = entry.macAddress else { continue }
+                    let ip = entry.ipAddress
+                    let vendor = await oui.vendorName(forMAC: mac)
+                    let device = store.update(ip: ip, mac: mac, vendor: vendor)
+                    continuation.yield(.device(device))
                 }
 
                 guard !Task.isCancelled else {

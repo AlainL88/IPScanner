@@ -68,6 +68,15 @@ struct ScanListView: View {
                 errorBanner(error)
             }
         }
+        .task {
+            viewModel.startPeriodicStatusCheck()
+        }
+        .onDisappear {
+            viewModel.stopPeriodicStatusCheck()
+        }
+        .refreshable {
+            await viewModel.refreshDeviceStatuses()
+        }
     }
 
     @ViewBuilder
@@ -314,7 +323,7 @@ struct ScanListView: View {
     @ViewBuilder
     private var statusBar: some View {
         if !viewModel.devices.isEmpty || viewModel.filterMode == .availableOnly {
-            HStack {
+            HStack(spacing: 8) {
                 switch viewModel.filterMode {
                 case .all:
                     if !viewModel.searchText.isEmpty {
@@ -355,6 +364,12 @@ struct ScanListView: View {
                     } else {
                         Text(String(format: String(localized: "%lld free IPs"), Int64(freeCount)))
                     }
+                }
+
+                if viewModel.isRefreshingStatus {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .accessibilityLabel(String(localized: "Updating status…"))
                 }
             }
             .font(.footnote.weight(.medium))
@@ -397,6 +412,16 @@ struct ScanListView: View {
 
         ToolbarItem(placement: .automatic) {
             Menu {
+                Button {
+                    Task { await viewModel.refreshDeviceStatuses() }
+                } label: {
+                    Label(String(localized: "Refresh Status (Ping)"), systemImage: "arrow.clockwise")
+                }
+                .disabled(viewModel.isScanning || viewModel.devices.isEmpty || viewModel.isRefreshingStatus)
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+
+                Divider()
+
                 Menu {
                     ForEach(SortKey.allCases) { key in
                         Button {

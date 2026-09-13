@@ -28,15 +28,24 @@ public actor PingService {
         return value
     }
 
-    /// Pings a single host once.
-    public func ping(host: String) async -> PingResult {
-        let identifier = Self.nextIdentifier()
-        let timeout = self.timeout
-        return await withCheckedContinuation { continuation in
-            queue.async {
-                let result = SimplePing.ping(host: host, identifier: identifier, sequence: 1, timeout: timeout)
-                continuation.resume(returning: result)
+    /// Pings a single host, with optional retries on failure (e.g. to avoid WiFi sleep/drop false negatives).
+    public func ping(host: String, retries: Int = 0, timeout: TimeInterval? = nil) async -> PingResult {
+        let actualTimeout = timeout ?? self.timeout
+        var attemptsLeft = max(0, retries)
+
+        while true {
+            let identifier = Self.nextIdentifier()
+            let result = await withCheckedContinuation { continuation in
+                queue.async {
+                    let res = SimplePing.ping(host: host, identifier: identifier, sequence: 1, timeout: actualTimeout)
+                    continuation.resume(returning: res)
+                }
             }
+            if result.succeeded || attemptsLeft == 0 {
+                return result
+            }
+            attemptsLeft -= 1
+            try? await Task.sleep(for: .milliseconds(50))
         }
     }
 

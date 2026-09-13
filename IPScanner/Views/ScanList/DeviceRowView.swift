@@ -232,26 +232,60 @@ struct DeviceRowView: View {
             }
         }()
 
-        return ZStack {
+        let dotSize: CGFloat = {
+            switch density {
+            case .compact: return 10
+            case .comfortable: return 12
+            case .spacious: return 14
+            }
+        }()
+
+        return ZStack(alignment: .bottomTrailing) {
             RoundedRectangle(cornerRadius: density == .compact ? 6 : 8)
                 .fill(Color.accentColor.opacity(0.12))
-            Image(systemName: icon)
-                .font(.system(size: symbolSize, weight: .medium))
-                .foregroundStyle(Color.accentColor)
+                .frame(width: size, height: size)
+                .overlay {
+                    Image(systemName: icon)
+                        .font(.system(size: symbolSize, weight: .medium))
+                        .foregroundStyle(Color.accentColor)
+                }
+
+            Circle()
+                .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
+                .frame(width: dotSize, height: dotSize)
+                .overlay(
+                    Circle()
+                        .stroke(statusBorderColor, lineWidth: 2)
+                )
+                .offset(x: 2, y: 2)
+                .animation(.easeInOut(duration: 0.25), value: device.isOnline)
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
     }
 
+    private var statusBorderColor: Color {
+        #if os(macOS)
+        Color(nsColor: .windowBackgroundColor)
+        #elseif os(iOS)
+        Color(uiColor: .systemBackground)
+        #endif
+    }
+
     private var statusIndicator: some View {
-        Circle()
-            .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
-            .frame(width: 8, height: 8)
-            .overlay(
-                Circle()
-                    .stroke(Color.primary.opacity(0.12), lineWidth: 1)
-            )
-            .accessibilityLabel(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
+        HStack(spacing: 4) {
+            Circle()
+                .fill(device.isOnline ? Color.statusOnline : Color.statusOffline)
+                .frame(width: 6, height: 6)
+            Text(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
+                .font(.system(size: subtitleFontSize - 1, weight: .medium))
+                .foregroundStyle(device.isOnline ? Color.statusOnline : .secondary)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background((device.isOnline ? Color.statusOnline : Color.secondary).opacity(0.12), in: Capsule())
+        .animation(.easeInOut(duration: 0.25), value: device.isOnline)
+        .accessibilityLabel(device.isOnline ? String(localized: "Online") : String(localized: "Offline"))
     }
 }
 

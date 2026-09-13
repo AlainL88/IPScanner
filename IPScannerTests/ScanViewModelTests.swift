@@ -230,4 +230,59 @@ final class ScanViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.filteredDevices.count, 2)
         XCTAssertFalse(viewModel.filteredDevices.contains(where: { $0.ip == "192.168.1.10" }))
     }
+
+    func testPeriodicStatusCheckStartAndStop() {
+        viewModel.startPeriodicStatusCheck(interval: 60)
+        XCTAssertFalse(viewModel.isScanning)
+
+        viewModel.stopPeriodicStatusCheck()
+    }
+
+    func testRefreshDeviceStatusesWithLoopback() async {
+        // Configure a device with 127.0.0.1 (which should respond to ping on local machine)
+        let loopbackDevice = ScannedDevice(
+            id: "127.0.0.1",
+            ip: "127.0.0.1",
+            mac: nil,
+            hostname: "localhost",
+            vendor: nil,
+            firstSeen: Date().addingTimeInterval(-3600),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: false,
+            isNew: false
+        )
+        let deadDevice = ScannedDevice(
+            id: "192.0.2.1", // TEST-NET-1 (non-routable/dead)
+            ip: "192.0.2.1",
+            mac: nil,
+            hostname: nil,
+            vendor: nil,
+            firstSeen: Date().addingTimeInterval(-3600),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: true,
+            isNew: false
+        )
+        viewModel.devices = [loopbackDevice, deadDevice]
+
+        // Persist records in SwiftData
+        let persistedLoopback = Device(ipAddress: "127.0.0.1", isOnline: false)
+        let persistedDead = Device(ipAddress: "192.0.2.1", isOnline: true)
+        context.insert(persistedLoopback)
+        context.insert(persistedDead)
+        try? context.save()
+
+        await viewModel.refreshDeviceStatuses()
+
+        // Loopback should be marked online
+        let updatedLoopback = viewModel.devices.first(where: { $0.ip == "127.0.0.1" })
+        XCTAssertEqual(updatedLoopback?.isOnline, true)
+
+        // Dead device should be marked offline
+        let updatedDead = viewModel.devices.first(where: { $0.ip == "192.0.2.1" })
+        XCTAssertEqual(updatedDead?.isOnline, false)
+
+        // SwiftData persisted models should match
+        XCTAssertEqual(persistedLoopback.isOnline, true)
+        XCTAssertEqual(persistedDead.isOnline, false)
+    }
 }

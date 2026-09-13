@@ -53,12 +53,14 @@ final class ScanViewModel {
     var filterMode: DeviceListFilter = .all
     var phase: ScanPhase = .idle
     var isScanning = false
+    var isRefreshingStatus = false
     var errorMessage: String?
     var lastScanSummary: ScanSummary?
     var networkName = String(localized: "Local network")
 
     private var knownIPsBeforeScan: Set<String> = []
     private var knownMACsBeforeScan: Set<String> = []
+    private var statusRefreshTask: Task<Void, Never>?
 
     init(context: ModelContext, appState: AppState) {
         self.context = context
@@ -241,6 +243,113 @@ final class ScanViewModel {
         scanTask = nil
         isScanning = false
         phase = .idle
+    }
+
+    // MARK: - Periodic Status Check & Quick Ping
+
+    /// Starts periodic quick status checks (pinging existing devices to update online/offline status without full scan).
+    func startPeriodicStatusCheck(interval: TimeInterval = 25) {
+        stopPeriodicStatusCheck()
+        statusRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { break }
+                guard let self else { break }
+                if !self.isScanning && !self.devices.isEmpty {
+                    await self.refreshDeviceStatuses()
+                }
+            }
+        }
+    }
+
+    /// Stops the periodic status check task.
+    func stopPeriodicStatusCheck() {
+        statusRefreshTask?.cancel()
+        statusRefreshTask = nil
+    }
+
+    /// Quickly checks reachable status (ICMP ping with retry + TCP probe + Layer 2 ARP cache) for all currently known devices,
+    /// updating `isOnline` and `lastSeen` in real-time without clearing or re-discovering the network.
+    func refreshDeviceStatuses() async {
+        guard !isScanning, !isRefreshingStatus, !devices.isEmpty else { return }
+        isRefreshingStatus = true
+        defer { isRefreshingStatus = false }
+
+        let currentDevices = devices
+        let pingService = PingService(timeout: 1.2)
+
+        await withTaskGroup(of: (String, Bool).self) { group in
+            for device in currentDevices {
+                let ip = device.ip
+                group.addTask {
+                    // 1. Fast ICMP ping check with 1 retry (2 attempts to absorb transient WiFi drops)
+                    let pingResult = await pingService.ping(host: ip, retries: 1, timeout: 1.0)
+                    if pingResult.succeeded {
+                        return (ip, true)
+                    }
+                    // 2. Multi-port TCP probe fallback (checks common IoT, smart home, media, and printer ports)
+                    if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
+                        return (ip, true)
+                    }
+                    // 3. Layer 2 ARP cache check: verify if the device has a valid MAC entry in the local ARP table
+                    if let mac = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(mac) {
+                        return (ip, true)
+                    }
+                    return (ip, false)
+                }
+            }
+
+            var updatedStatuses: [String: Bool] = [:]
+            for await (ip, isOnline) in group {
+                updatedStatuses[ip] = isOnline
+            }
+
+            let now = Date()
+            for index in devices.indices {
+                let ip = devices[index].ip
+                if let isOnline = updatedStatuses[ip] {
+                    if devices[index].isOnline != isOnline {
+                        devices[index] = ScannedDevice(
+                            id: devices[index].id,
+                            ip: devices[index].ip,
+                            mac: devices[index].mac,
+                            hostname: devices[index].hostname,
+                            vendor: devices[index].vendor,
+                            firstSeen: devices[index].firstSeen,
+                            lastSeen: isOnline ? now : devices[index].lastSeen,
+                            isOnline: isOnline,
+                            isNew: devices[index].isNew
+                        )
+                    } else if isOnline {
+                        devices[index] = ScannedDevice(
+                            id: devices[index].id,
+                            ip: devices[index].ip,
+                            mac: devices[index].mac,
+                            hostname: devices[index].hostname,
+                            vendor: devices[index].vendor,
+                            firstSeen: devices[index].firstSeen,
+                            lastSeen: now,
+                            isOnline: true,
+                            isNew: devices[index].isNew
+                        )
+                    }
+                }
+            }
+
+            // Persist status updates in SwiftData
+            let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+            for (ip, isOnline) in updatedStatuses {
+                if let match = allPersisted.first(where: { $0.ipAddress == ip }) {
+                    if match.isOnline != isOnline {
+                        match.isOnline = isOnline
+                    }
+                    if isOnline {
+                        match.lastSeen = now
+                    }
+                }
+            }
+            try? context.save()
+        }
     }
 
     private func isDeviceNew(_ device: ScannedDevice) -> Bool {

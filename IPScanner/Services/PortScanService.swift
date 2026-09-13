@@ -95,10 +95,16 @@ public actor PortScanService {
         }
     }
 
+    /// Common ports across web, IoT, smart home, media, and network devices.
+    public static let commonProbePorts: [UInt16] = [
+        80, 443, 8080, 8000, 8443, 5000, 22, 53, 445, 139,
+        5353, 6668, 1883, 8008, 8009, 9000, 9100, 631, 5900, 3389, 7000
+    ]
+
     /// Probes a host across common TCP ports with a short timeout to check if it is active.
     public static func isHostReachable(
         host: String,
-        probePorts: [UInt16] = [80, 443, 445, 139, 22, 8080, 53, 8000, 8443, 5000],
+        probePorts: [UInt16] = commonProbePorts,
         timeout: TimeInterval = 0.4
     ) async -> Bool {
         await withTaskGroup(of: Bool.self) { group in
