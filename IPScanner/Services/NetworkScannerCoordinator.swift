@@ -285,7 +285,6 @@ public actor NetworkScannerCoordinator {
                 // 7. Final ARP & vendor enrichment pass:
                 // Captures MAC addresses for devices whose ARP entries populated during
                 // ping sweep, TCP probe, or Bonjour stages (after network stack cache settled).
-                #if os(macOS)
                 let finalARPEntries = ARPTableService.read()
                 let arpLookup = Dictionary(finalARPEntries.compactMap { entry -> (String, String)? in
                     guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
@@ -307,7 +306,6 @@ public actor NetworkScannerCoordinator {
                         }
                     }
                 }
-                #endif
 
                 continuation.yield(.phase(.finishing))
 

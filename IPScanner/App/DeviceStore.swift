@@ -18,7 +18,6 @@ enum DeviceStore {
     /// falling back to IP address with collision safeguards. Preserves any custom metadata.
     static func upsert(_ device: ScannedDevice, in context: ModelContext) {
         var device = device
-        #if os(macOS)
         if device.mac == nil || !ARPTableService.isValidMAC(device.mac) {
             if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
                 let liveVendor = device.vendor ?? OUILookupService.shared.vendorNameSync(forMAC: liveMAC)
@@ -35,7 +34,6 @@ enum DeviceStore {
                 )
             }
         }
-        #endif
         let mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
         let hasValidMAC = ARPTableService.isValidMAC(mac)
         let hostname = device.hostname?.trimmingCharacters(in: .whitespacesAndNewlines)

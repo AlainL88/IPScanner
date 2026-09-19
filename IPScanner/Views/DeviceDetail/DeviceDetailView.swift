@@ -145,11 +145,9 @@ struct DeviceDetailView: View {
         if let persistedMAC = persistedDevice?.macAddress, ARPTableService.isValidMAC(persistedMAC) {
             return persistedMAC
         }
-        #if os(macOS)
         if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
             return liveMAC
         }
-        #endif
         return device.mac
     }
 
@@ -607,13 +605,11 @@ struct DeviceDetailView: View {
     private func loadPersistedDevice() {
         let ip = device.ip
         var mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
-        #if os(macOS)
         if mac == nil || !ARPTableService.isValidMAC(mac) {
             if let liveMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(liveMAC) {
                 mac = liveMAC
             }
         }
-        #endif
         let hasValidMAC = ARPTableService.isValidMAC(mac)
 
         if hasValidMAC, let mac {

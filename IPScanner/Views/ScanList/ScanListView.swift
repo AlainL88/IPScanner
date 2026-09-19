@@ -27,11 +27,9 @@ struct ScanListView: View {
     private func persistedDevice(for device: ScannedDevice) -> Device? {
         let mac: String? = {
             if let m = device.mac, ARPTableService.isValidMAC(m) { return m }
-            #if os(macOS)
             if let live = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(live) {
                 return live
             }
-            #endif
             return nil
         }()
 
@@ -175,11 +173,9 @@ struct ScanListView: View {
                 let effectiveMAC: String? = {
                     if let mac = device.mac, ARPTableService.isValidMAC(mac) { return mac }
                     if let persistedMAC = persisted?.macAddress, ARPTableService.isValidMAC(persistedMAC) { return persistedMAC }
-                    #if os(macOS)
                     if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
                         return liveMAC
                     }
-                    #endif
                     return nil
                 }()
                 NavigationLink {
@@ -270,11 +266,9 @@ struct ScanListView: View {
         let mac: String? = {
             if let m = device.mac, ARPTableService.isValidMAC(m) { return m }
             if let persistedMAC = persisted?.macAddress, ARPTableService.isValidMAC(persistedMAC) { return persistedMAC }
-            #if os(macOS)
             if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
                 return liveMAC
             }
-            #endif
             return nil
         }()
 

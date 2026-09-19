@@ -298,12 +298,10 @@ final class ScanViewModel {
                         if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
                             return (ip, true)
                         }
-                        #if os(macOS)
-                        // 3. Active ARP table entry (crucial for macOS hosts with firewall/stealth mode active)
+                        // 3. Active ARP table entry (crucial for hosts with firewall/stealth mode active)
                         if let currentMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(currentMAC) {
                             return (ip, true)
                         }
-                        #endif
                         return (ip, false)
                     }
                 }
@@ -321,11 +319,9 @@ final class ScanViewModel {
                         if ip == primaryIface?.ipAddress {
                             return primaryIface?.hardwareAddress
                         }
-                        #if os(macOS)
                         if let arpMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(arpMAC) {
                             return arpMAC
                         }
-                        #endif
                         return devices[index].mac
                     }()
                     let currentVendor: String? = {
@@ -378,11 +374,9 @@ final class ScanViewModel {
                         let resolvedMAC: String? = {
                             if let mac = match.macAddress, ARPTableService.isValidMAC(mac) { return mac }
                             if ip == primaryIface?.ipAddress { return primaryIface?.hardwareAddress }
-                            #if os(macOS)
                             if let arpMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(arpMAC) {
                                 return arpMAC
                             }
-                            #endif
                             return nil
                         }()
 
@@ -435,11 +429,7 @@ final class ScanViewModel {
                     } else if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
                         isReachable = true
                     } else {
-                        #if os(macOS)
                         isReachable = ARPTableService.isValidMAC(mac)
-                        #else
-                        isReachable = false
-                        #endif
                     }
                     guard isReachable else { continue }
 
