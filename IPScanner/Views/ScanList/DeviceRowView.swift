@@ -180,10 +180,17 @@ struct DeviceRowView: View {
 
     private var hardwareInfoItems: [SubtitleItem] {
         var items: [SubtitleItem] = []
-        if columns.contains(.vendor), let vendor = device.vendor, !vendor.isEmpty {
+        let effectiveMAC = macAddress ?? device.mac
+        let effectiveVendor: String? = {
+            if let v = device.vendor, !v.isEmpty { return v }
+            if let mac = effectiveMAC {
+                return OUILookupService.shared.vendorNameSync(forMAC: mac)
+            }
+            return nil
+        }()
+        if columns.contains(.vendor), let vendor = effectiveVendor, !vendor.isEmpty {
             items.append(SubtitleItem(text: vendor, isMonospaced: false, iconName: nil))
         }
-        let effectiveMAC = macAddress ?? device.mac
         if columns.contains(.mac), let mac = effectiveMAC, !mac.isEmpty {
             items.append(SubtitleItem(text: mac, isMonospaced: true, iconName: nil))
         }

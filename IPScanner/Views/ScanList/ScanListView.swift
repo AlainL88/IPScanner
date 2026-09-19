@@ -25,7 +25,17 @@ struct ScanListView: View {
     /// Resolves the persisted Device record for a scanned device,
     /// prioritizing MAC address matching when available, then IP address.
     private func persistedDevice(for device: ScannedDevice) -> Device? {
-        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+        let mac: String? = {
+            if let m = device.mac, ARPTableService.isValidMAC(m) { return m }
+            #if os(macOS)
+            if let live = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(live) {
+                return live
+            }
+            #endif
+            return nil
+        }()
+
+        if let mac {
             if let match = persistedDevices.first(where: {
                 $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
             }) {
@@ -162,7 +172,16 @@ struct ScanListView: View {
             }
             ForEach(viewModel.filteredDevices) { device in
                 let persisted = persistedDevice(for: device)
-                let effectiveMAC = (device.mac != nil && !device.mac!.isEmpty) ? device.mac : persisted?.macAddress
+                let effectiveMAC: String? = {
+                    if let mac = device.mac, ARPTableService.isValidMAC(mac) { return mac }
+                    if let persistedMAC = persisted?.macAddress, ARPTableService.isValidMAC(persistedMAC) { return persistedMAC }
+                    #if os(macOS)
+                    if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
+                        return liveMAC
+                    }
+                    #endif
+                    return nil
+                }()
                 NavigationLink {
                     DeviceDetailView(device: device, viewModel: viewModel)
                 } label: {
@@ -248,7 +267,16 @@ struct ScanListView: View {
 
     @ViewBuilder
     private func deviceContextMenu(for device: ScannedDevice, persisted: Device?) -> some View {
-        let mac = (device.mac != nil && !device.mac!.isEmpty) ? device.mac : persisted?.macAddress
+        let mac: String? = {
+            if let m = device.mac, ARPTableService.isValidMAC(m) { return m }
+            if let persistedMAC = persisted?.macAddress, ARPTableService.isValidMAC(persistedMAC) { return persistedMAC }
+            #if os(macOS)
+            if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
+                return liveMAC
+            }
+            #endif
+            return nil
+        }()
 
         Button {
             toggleWhitelist(for: device, persisted: persisted)

@@ -326,4 +326,37 @@ final class ScanViewModelTests: XCTestCase {
         XCTAssertEqual(persisted.first?.ipAddress, "192.168.1.52")
         XCTAssertEqual(persisted.first?.macAddress, "de:ad:be:ef:00:01")
     }
+
+    func testRefreshDeviceStatusesBackfillsMACAndVendor() async {
+        guard let primaryIface = SubnetService.primaryIPv4Interface(),
+              let hardwareMAC = primaryIface.hardwareAddress else {
+            return
+        }
+
+        let deviceWithoutMAC = ScannedDevice(
+            id: primaryIface.ipAddress,
+            ip: primaryIface.ipAddress,
+            mac: nil,
+            hostname: "my-mac",
+            vendor: nil,
+            firstSeen: Date().addingTimeInterval(-3600),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: true,
+            isNew: false
+        )
+        viewModel.devices = [deviceWithoutMAC]
+
+        let persisted = Device(ipAddress: primaryIface.ipAddress, macAddress: nil, isOnline: true)
+        context.insert(persisted)
+        try? context.save()
+
+        await viewModel.refreshDeviceStatuses()
+
+        // In-memory device should now have primary interface MAC
+        let inMemory = viewModel.devices.first(where: { $0.ip == primaryIface.ipAddress })
+        XCTAssertEqual(inMemory?.mac?.caseInsensitiveCompare(hardwareMAC), .orderedSame)
+
+        // SwiftData record should have backfilled MAC
+        XCTAssertEqual(persisted.macAddress?.caseInsensitiveCompare(hardwareMAC), .orderedSame)
+    }
 }

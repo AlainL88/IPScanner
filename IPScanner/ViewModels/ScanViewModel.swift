@@ -328,6 +328,13 @@ final class ScanViewModel {
                         #endif
                         return devices[index].mac
                     }()
+                    let currentVendor: String? = {
+                        if let v = devices[index].vendor, !v.isEmpty { return v }
+                        if let currentMAC {
+                            return OUILookupService.shared.vendorNameSync(forMAC: currentMAC)
+                        }
+                        return nil
+                    }()
                     if let isOnline = updatedStatuses[ip] {
                         if devices[index].isOnline != isOnline {
                             devices[index] = ScannedDevice(
@@ -335,7 +342,7 @@ final class ScanViewModel {
                                 ip: devices[index].ip,
                                 mac: currentMAC,
                                 hostname: devices[index].hostname,
-                                vendor: devices[index].vendor,
+                                vendor: currentVendor,
                                 firstSeen: devices[index].firstSeen,
                                 lastSeen: isOnline ? now : devices[index].lastSeen,
                                 isOnline: isOnline,
@@ -347,7 +354,7 @@ final class ScanViewModel {
                                 ip: devices[index].ip,
                                 mac: currentMAC,
                                 hostname: devices[index].hostname,
-                                vendor: devices[index].vendor,
+                                vendor: currentVendor,
                                 firstSeen: devices[index].firstSeen,
                                 lastSeen: now,
                                 isOnline: true,
@@ -366,6 +373,30 @@ final class ScanViewModel {
                         }
                         if isOnline {
                             match.lastSeen = now
+                        }
+
+                        let resolvedMAC: String? = {
+                            if let mac = match.macAddress, ARPTableService.isValidMAC(mac) { return mac }
+                            if ip == primaryIface?.ipAddress { return primaryIface?.hardwareAddress }
+                            #if os(macOS)
+                            if let arpMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(arpMAC) {
+                                return arpMAC
+                            }
+                            #endif
+                            return nil
+                        }()
+
+                        if let resolvedMAC, ARPTableService.isValidMAC(resolvedMAC) {
+                            if match.macAddress == nil || match.macAddress?.caseInsensitiveCompare(resolvedMAC) != .orderedSame {
+                                match.macAddress = resolvedMAC
+                                for stale in allPersisted where stale.persistentModelID != match.persistentModelID &&
+                                    stale.macAddress?.caseInsensitiveCompare(resolvedMAC) == .orderedSame {
+                                    context.delete(stale)
+                                }
+                            }
+                            if match.vendor == nil || match.vendor?.isEmpty == true {
+                                match.vendor = OUILookupService.shared.vendorNameSync(forMAC: resolvedMAC)
+                            }
                         }
                     }
                 }

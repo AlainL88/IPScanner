@@ -28,12 +28,19 @@ public actor OUILookupService {
         database = db
     }
 
+    public static let shared = OUILookupService()
+
     /// Number of OUI prefixes loaded from the bundled dataset.
     public var count: Int { database.count }
 
     /// Looks up the vendor for a MAC address ("AA:BB:CC:DD:EE:FF", dashes or
     /// dots allowed; case-insensitive). Returns nil for unknown or malformed MACs.
     public func vendorName(forMAC mac: String) -> String? {
+        vendorNameSync(forMAC: mac)
+    }
+
+    /// Synchronous lookup using the loaded database.
+    public nonisolated func vendorNameSync(forMAC mac: String) -> String? {
         guard let prefix = Self.normalizedPrefix(from: mac) else { return nil }
         return database[prefix]
     }

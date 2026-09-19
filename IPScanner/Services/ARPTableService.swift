@@ -10,6 +10,9 @@
 //  exactly why the scanner runs a ping sweep first to populate it.
 
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#endif
 
 #if os(iOS)
 // net/route.h is a private header on iOS, so the routing types the sysctl call
@@ -59,18 +62,30 @@ public struct ARPEntry: Sendable, Hashable {
 public enum ARPTableService {
     /// Reads the whole ARP table as a list of entries.
     public static func read() -> [ARPEntry] {
-        var mib = [Int32]([CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO])
+        // On modern macOS (macOS 15+ / macOS 27), sysctl(NET_RT_FLAGS) with AF_INET (2) or AF_UNSPEC (0)
+        // returns the routing messages. We probe [AF_INET, 0] to guarantee compatibility across
+        // macOS and iOS versions.
+        var buffer: [UInt8]?
         var length = 0
-        let sizeResult = mib.withUnsafeMutableBufferPointer { bp -> Bool in
-            sysctl(bp.baseAddress, 6, nil, &length, nil, 0) == 0
-        }
-        guard sizeResult, length > 0 else { return [] }
 
-        var buffer = [UInt8](repeating: 0, count: length)
-        let readResult = mib.withUnsafeMutableBufferPointer { bp -> Bool in
-            sysctl(bp.baseAddress, 6, &buffer, &length, nil, 0) == 0
+        for af in [AF_INET, Int32(0)] {
+            var mib = [Int32]([CTL_NET, PF_ROUTE, 0, af, NET_RT_FLAGS, RTF_LLINFO])
+            var size = 0
+            let res1 = sysctl(&mib, 6, nil, &size, nil, 0)
+            guard res1 == 0 && size > 0 else { continue }
+
+            var buf = [UInt8](repeating: 0, count: size)
+            let res2 = mib.withUnsafeMutableBufferPointer { bp -> Int32 in
+                sysctl(bp.baseAddress, 6, &buf, &size, nil, 0)
+            }
+            if res2 == 0 && size > 0 {
+                buffer = buf
+                length = size
+                break
+            }
         }
-        guard readResult else { return [] }
+
+        guard let buffer, length > 0 else { return [] }
 
         var entries: [ARPEntry] = []
         var offset = 0
@@ -126,22 +141,30 @@ public enum ARPTableService {
     /// The rt_msghdr layout is nominally 92 bytes, but a few iOS kernels use a
     /// slightly different routing structure. We probe nearby sizes and pick the
     /// one whose first sockaddr looks valid (AF_INET for RTA_DST, AF_LINK for
-    /// RTA_GATEWAY), so MAC parsing stays correct on any device.
+    /// RTA_GATEWAY, or AF_INET6), so MAC parsing stays correct on any device.
     private static func resolveHeaderSize(in buffer: [UInt8], offset: Int, msglen: Int) -> Int {
         let nominal = MemoryLayout<rt_msghdr>.size
         let messageEnd = offset + msglen
-        for delta in [0, -4, 4, -8, 8] {
+        for delta in [0, -4, 4, -8, 8, -16, 16] {
             let candidate = nominal + delta
             let pos = offset + candidate
             guard pos + 8 <= messageEnd else { continue }
             let saLen = buffer[pos]
             let family = buffer[pos + 1]
-            let validFamily = family == sa_family_t(AF_INET) || family == sa_family_t(AF_LINK)
+            let validFamily = family == sa_family_t(AF_INET) || family == sa_family_t(AF_LINK) || family == sa_family_t(AF_INET6)
             if validFamily && Int(saLen) > 0 && pos + Int(saLen) <= messageEnd {
                 return candidate
             }
         }
         return nominal
+    }
+
+    /// BSD routing socket alignment: sockaddr structures are padded to 4-byte boundaries.
+    private static func saSize(_ saLen: UInt8) -> Int {
+        if saLen == 0 { return MemoryLayout<UInt32>.size }
+        let len = Int(saLen)
+        let step = MemoryLayout<UInt32>.size
+        return ((len + step - 1) / step) * step
     }
 
     private static func parseAddresses(
@@ -162,7 +185,9 @@ public enum ARPTableService {
         while cursor < end && bit < 16 {
             if mask & (Int32(1) << bit) != 0 {
                 let sockaddrLength = readStruct(sockaddr.self, from: buffer, at: cursor).sa_len
-                guard sockaddrLength > 0, cursor + Int(sockaddrLength) <= buffer.count else { break }
+                guard sockaddrLength > 0, cursor + Int(sockaddrLength) <= buffer.count else {
+                    break
+                }
 
                 switch bit {
                 case 0: // RTA_DST -> IPv4 address
@@ -179,7 +204,7 @@ public enum ARPTableService {
                 default:
                     break
                 }
-                cursor += Int(sockaddrLength)
+                cursor += saSize(sockaddrLength)
             }
             bit += 1
         }

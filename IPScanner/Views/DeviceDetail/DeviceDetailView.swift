@@ -103,7 +103,7 @@ struct DeviceDetailView: View {
             Divider()
             infoRow(label: String(localized: "Hostname"), value: device.hostname ?? "—")
             Divider()
-            infoRow(label: String(localized: "Vendor"), value: device.vendor ?? "—")
+            infoRow(label: String(localized: "Vendor"), value: resolvedVendor ?? "—")
             Divider()
             infoRow(label: String(localized: "First seen"), value: formatted(device.firstSeen))
             Divider()
@@ -145,7 +145,21 @@ struct DeviceDetailView: View {
         if let persistedMAC = persistedDevice?.macAddress, ARPTableService.isValidMAC(persistedMAC) {
             return persistedMAC
         }
+        #if os(macOS)
+        if let liveMAC = ARPTableService.macAddress(for: device.ip), ARPTableService.isValidMAC(liveMAC) {
+            return liveMAC
+        }
+        #endif
         return device.mac
+    }
+
+    private var resolvedVendor: String? {
+        if let v = device.vendor, !v.isEmpty { return v }
+        if let v = persistedDevice?.vendor, !v.isEmpty { return v }
+        if let mac = resolvedMAC {
+            return OUILookupService.shared.vendorNameSync(forMAC: mac)
+        }
+        return nil
     }
 
     /// MAC row with an info button when the address is unavailable (iOS exposes
@@ -592,7 +606,14 @@ struct DeviceDetailView: View {
 
     private func loadPersistedDevice() {
         let ip = device.ip
-        let mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var mac = device.mac?.trimmingCharacters(in: .whitespacesAndNewlines)
+        #if os(macOS)
+        if mac == nil || !ARPTableService.isValidMAC(mac) {
+            if let liveMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(liveMAC) {
+                mac = liveMAC
+            }
+        }
+        #endif
         let hasValidMAC = ARPTableService.isValidMAC(mac)
 
         if hasValidMAC, let mac {
@@ -609,11 +630,12 @@ struct DeviceDetailView: View {
         }
 
         if persistedDevice == nil {
+            let vendor = device.vendor ?? (mac != nil ? OUILookupService.shared.vendorNameSync(forMAC: mac!) : nil)
             let newDevice = Device(
                 ipAddress: device.ip,
                 macAddress: hasValidMAC ? mac : device.mac,
                 hostname: device.hostname,
-                vendor: device.vendor,
+                vendor: vendor,
                 firstSeen: device.firstSeen,
                 lastSeen: device.lastSeen,
                 isOnline: device.isOnline
@@ -631,7 +653,8 @@ struct DeviceDetailView: View {
             if let hostname = device.hostname, !hostname.isEmpty, persisted.hostname == nil {
                 persisted.hostname = hostname
             }
-            if let vendor = device.vendor, !vendor.isEmpty, persisted.vendor == nil {
+            let vendor = device.vendor ?? (mac != nil ? OUILookupService.shared.vendorNameSync(forMAC: mac!) : nil)
+            if let vendor, !vendor.isEmpty, persisted.vendor == nil {
                 persisted.vendor = vendor
             }
             try? context.save()
