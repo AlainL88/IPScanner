@@ -115,7 +115,11 @@ public actor NetworkScannerCoordinator {
 
                     if result.succeeded {
                         let ip = result.address
-                        let mac = ARPTableService.macAddress(for: ip)
+                        let primaryIface = SubnetService.primaryIPv4Interface()
+                        var mac = ARPTableService.macAddress(for: ip)
+                        if ip == primaryIface?.ipAddress && !ARPTableService.isValidMAC(mac) {
+                            mac = primaryIface?.hardwareAddress
+                        }
                         let initialDevice = store.update(ip: ip, mac: mac)
                         continuation.yield(.device(initialDevice))
 
@@ -195,17 +199,41 @@ public actor NetworkScannerCoordinator {
                 if includeBonjour {
                     continuation.yield(.phase(.bonjourDiscovery))
                     let bonjourHostnames = await bonjourTask.value
-                    for (ip, hostname) in bonjourHostnames {
+                    let primaryIface = SubnetService.primaryIPv4Interface()
+                    for (ip, rawHostname) in bonjourHostnames {
                         if targetIPSet.contains(ip) {
-                            let mac = ARPTableService.macAddress(for: ip)
-                            let vendor: String?
-                            if let mac, ARPTableService.isValidMAC(mac) {
-                                vendor = await oui.vendorName(forMAC: mac)
+                            let hostname = DNSResolver.cleanHostname(rawHostname)
+                            if let existing = store.get(ip) {
+                                let device = store.update(ip: ip, hostname: hostname)
+                                continuation.yield(.device(device))
                             } else {
-                                vendor = nil
+                                // For a new IP found ONLY via Bonjour:
+                                // Verify it actually exists on the network (not a stale mDNS cache entry).
+                                let isLocalHost = (ip == primaryIface?.ipAddress)
+                                var mac = ARPTableService.macAddress(for: ip)
+                                if isLocalHost && !ARPTableService.isValidMAC(mac) {
+                                    mac = primaryIface?.hardwareAddress
+                                }
+                                let hasValidMAC = (mac != nil && ARPTableService.isValidMAC(mac))
+
+                                if hasValidMAC || isLocalHost {
+                                    let vendor = hasValidMAC ? await oui.vendorName(forMAC: mac!) : nil
+                                    let device = store.update(ip: ip, mac: mac, hostname: hostname, vendor: vendor)
+                                    continuation.yield(.device(device))
+                                } else {
+                                    // Device has no MAC in ARP. Check if it actually responds to ICMP ping or TCP probe
+                                    var isReachable = await pingService.ping(host: ip, retries: 0, timeout: 0.25).succeeded
+                                    if !isReachable {
+                                        isReachable = await PortScanService.isHostReachable(host: ip, timeout: 0.25)
+                                    }
+                                    if isReachable {
+                                        let updatedMAC = ARPTableService.macAddress(for: ip)
+                                        let vendor = (updatedMAC != nil && ARPTableService.isValidMAC(updatedMAC)) ? await oui.vendorName(forMAC: updatedMAC!) : nil
+                                        let device = store.update(ip: ip, mac: updatedMAC, hostname: hostname, vendor: vendor)
+                                        continuation.yield(.device(device))
+                                    }
+                                }
                             }
-                            let device = store.update(ip: ip, mac: mac, hostname: hostname, vendor: vendor)
-                            continuation.yield(.device(device))
                         }
                     }
                 }
@@ -238,8 +266,12 @@ public actor NetworkScannerCoordinator {
                 }
 
                 // 6. Local host identification fallback:
-                if let localIP = SubnetService.primaryIPv4Interface()?.ipAddress {
-                    let localMAC = ARPTableService.macAddress(for: localIP)
+                if let primaryIface = SubnetService.primaryIPv4Interface() {
+                    let localIP = primaryIface.ipAddress
+                    var localMAC = ARPTableService.macAddress(for: localIP)
+                    if !ARPTableService.isValidMAC(localMAC) {
+                        localMAC = primaryIface.hardwareAddress
+                    }
                     let localVendor = (localMAC != nil && ARPTableService.isValidMAC(localMAC)) ? await oui.vendorName(forMAC: localMAC!) : nil
                     #if os(macOS)
                     let localName = Host.current().localizedName ?? DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)

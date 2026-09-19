@@ -138,6 +138,16 @@ struct DeviceDetailView: View {
         }
     }
 
+    private var resolvedMAC: String? {
+        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+            return mac
+        }
+        if let persistedMAC = persistedDevice?.macAddress, ARPTableService.isValidMAC(persistedMAC) {
+            return persistedMAC
+        }
+        return device.mac
+    }
+
     /// MAC row with an info button when the address is unavailable (iOS exposes
     /// no neighbor ARP info, so it shows N/A instead of a fake value).
     private var macRow: some View {
@@ -146,7 +156,7 @@ struct DeviceDetailView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
-            if let mac = device.mac, !mac.isEmpty {
+            if let mac = resolvedMAC, !mac.isEmpty {
                 Text(mac)
                     .font(.system(.subheadline, design: .monospaced).weight(.medium))
                     .foregroundStyle(.primary)
@@ -170,7 +180,7 @@ struct DeviceDetailView: View {
         }
         .padding(.vertical, 8)
         .contextMenu {
-            if let mac = device.mac, !mac.isEmpty {
+            if let mac = resolvedMAC, !mac.isEmpty {
                 Button {
                     copyToClipboard(mac)
                 } label: {
@@ -661,7 +671,7 @@ struct DeviceDetailView: View {
     }
 
     private func wake() {
-        guard let mac = device.mac, !mac.isEmpty else { return }
+        guard let mac = resolvedMAC, !mac.isEmpty else { return }
         let service = WakeOnLANService()
         Task {
             try? await service.sendWake(mac: mac)

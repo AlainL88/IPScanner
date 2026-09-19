@@ -287,6 +287,9 @@ final class ScanViewModel {
                     let ip = device.ip
                     group.addTask {
                         // 1. Fast ICMP ping check with 1 retry (2 attempts to absorb transient WiFi drops)
+                        if ip == SubnetService.primaryIPv4Interface()?.ipAddress {
+                            return (ip, true)
+                        }
                         let pingResult = await pingService.ping(host: ip, retries: 1, timeout: 1.0)
                         if pingResult.succeeded {
                             return (ip, true)
@@ -310,14 +313,27 @@ final class ScanViewModel {
                     updatedStatuses[ip] = isOnline
                 }
 
+                let primaryIface = SubnetService.primaryIPv4Interface()
                 for index in devices.indices {
                     let ip = devices[index].ip
+                    let currentMAC: String? = {
+                        if let mac = devices[index].mac, ARPTableService.isValidMAC(mac) { return mac }
+                        if ip == primaryIface?.ipAddress {
+                            return primaryIface?.hardwareAddress
+                        }
+                        #if os(macOS)
+                        if let arpMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(arpMAC) {
+                            return arpMAC
+                        }
+                        #endif
+                        return devices[index].mac
+                    }()
                     if let isOnline = updatedStatuses[ip] {
                         if devices[index].isOnline != isOnline {
                             devices[index] = ScannedDevice(
                                 id: devices[index].id,
                                 ip: devices[index].ip,
-                                mac: devices[index].mac,
+                                mac: currentMAC,
                                 hostname: devices[index].hostname,
                                 vendor: devices[index].vendor,
                                 firstSeen: devices[index].firstSeen,
@@ -329,7 +345,7 @@ final class ScanViewModel {
                             devices[index] = ScannedDevice(
                                 id: devices[index].id,
                                 ip: devices[index].ip,
-                                mac: devices[index].mac,
+                                mac: currentMAC,
                                 hostname: devices[index].hostname,
                                 vendor: devices[index].vendor,
                                 firstSeen: devices[index].firstSeen,
@@ -439,7 +455,12 @@ final class ScanViewModel {
         if matchIndex == nil, hasDistinctHost, let hostname {
             matchIndex = list.firstIndex(where: {
                 guard let existingHost = $0.hostname, isDistinctHostname(existingHost) else { return false }
-                return existingHost.caseInsensitiveCompare(hostname) == .orderedSame
+                guard existingHost.caseInsensitiveCompare(hostname) == .orderedSame else { return false }
+                // Safeguard: if the existing entry already has a MAC and incoming does not, don't jump IPs
+                if $0.mac != nil && !hasValidMAC && $0.ip != incoming.ip {
+                    return false
+                }
+                return true
             })
         }
         // 3. Fallback match by IP address

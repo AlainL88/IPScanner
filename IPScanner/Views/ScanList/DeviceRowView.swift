@@ -16,6 +16,7 @@ struct DeviceRowView: View {
     let density: RowDensity
     let columns: Set<DeviceColumn>
     var isWhitelisted: Bool = false
+    var macAddress: String? = nil
 
     var body: some View {
         HStack(spacing: 14) {
@@ -182,7 +183,8 @@ struct DeviceRowView: View {
         if columns.contains(.vendor), let vendor = device.vendor, !vendor.isEmpty {
             items.append(SubtitleItem(text: vendor, isMonospaced: false, iconName: nil))
         }
-        if columns.contains(.mac), let mac = device.mac, !mac.isEmpty {
+        let effectiveMAC = macAddress ?? device.mac
+        if columns.contains(.mac), let mac = effectiveMAC, !mac.isEmpty {
             items.append(SubtitleItem(text: mac, isMonospaced: true, iconName: nil))
         }
         if columns.contains(.whitelist) {

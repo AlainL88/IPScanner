@@ -162,6 +162,7 @@ struct ScanListView: View {
             }
             ForEach(viewModel.filteredDevices) { device in
                 let persisted = persistedDevice(for: device)
+                let effectiveMAC = (device.mac != nil && !device.mac!.isEmpty) ? device.mac : persisted?.macAddress
                 NavigationLink {
                     DeviceDetailView(device: device, viewModel: viewModel)
                 } label: {
@@ -171,7 +172,8 @@ struct ScanListView: View {
                         icon: persisted?.customIcon ?? Device.inferredIcon(for: device.hostname, ip: device.ip),
                         density: appState.rowDensity,
                         columns: appState.visibleColumns,
-                        isWhitelisted: persisted?.isWhitelisted ?? false
+                        isWhitelisted: persisted?.isWhitelisted ?? false,
+                        macAddress: effectiveMAC
                     )
                 }
                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
@@ -246,6 +248,8 @@ struct ScanListView: View {
 
     @ViewBuilder
     private func deviceContextMenu(for device: ScannedDevice, persisted: Device?) -> some View {
+        let mac = (device.mac != nil && !device.mac!.isEmpty) ? device.mac : persisted?.macAddress
+
         Button {
             toggleWhitelist(for: device, persisted: persisted)
         } label: {
@@ -265,7 +269,7 @@ struct ScanListView: View {
                 Label(String(localized: "IP: \(device.ip)"), systemImage: "doc.on.doc")
             }
 
-            if let mac = device.mac, !mac.isEmpty {
+            if let mac, !mac.isEmpty {
                 Button {
                     copyToClipboard(mac)
                 } label: {
@@ -306,7 +310,7 @@ struct ScanListView: View {
             Label(String(localized: "Port Scan"), systemImage: "network")
         }
 
-        if let mac = device.mac, ARPTableService.isValidMAC(mac) {
+        if let mac, ARPTableService.isValidMAC(mac) {
             Button {
                 sendWakeOnLAN(mac: mac)
             } label: {

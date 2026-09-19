@@ -49,6 +49,13 @@ public enum DNSResolver {
         if name.lowercased().hasSuffix(".local") {
             name = String(name.dropLast(6))
         }
+        // Strip Apple CompanionLink hex prefix (e.g. "2A7D354E4C9B@MacBook Air")
+        if let atIndex = name.firstIndex(of: "@") {
+            let prefix = name[..<atIndex]
+            if prefix.count >= 8 && prefix.allSatisfy({ $0.isHexDigit }) {
+                name = String(name[name.index(after: atIndex)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
         guard !name.isEmpty else { return nil }
         // If it is an IPv4 literal, discard it
         if IPv4Address(string: name) != nil {

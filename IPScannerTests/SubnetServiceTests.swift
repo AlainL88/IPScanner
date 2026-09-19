@@ -36,8 +36,20 @@ final class SubnetServiceTests: XCTestCase {
         XCTAssertNotNil(IPv4Address(string: iface.ipAddress))
         XCTAssertLessThanOrEqual(iface.prefixLength, 32)
         XCTAssertTrue(iface.cidr.contains("/"))
+        XCTAssertNotNil(iface.hardwareAddress)
+        XCTAssertTrue(ARPTableService.isValidMAC(iface.hardwareAddress))
     }
     #endif
+
+    func testDNSResolverCleanHostname() {
+        XCTAssertEqual(DNSResolver.cleanHostname("MacBook-Air.local"), "MacBook-Air")
+        XCTAssertEqual(DNSResolver.cleanHostname("2A7D354E4C9B@MacBook Air"), "MacBook Air")
+        XCTAssertEqual(DNSResolver.cleanHostname("2A7D354E4C9B@MacBook Air.local"), "MacBook Air")
+        XCTAssertEqual(DNSResolver.cleanHostname("server.local."), "server")
+        XCTAssertNil(DNSResolver.cleanHostname("192.168.1.1"))
+        XCTAssertNil(DNSResolver.cleanHostname("   "))
+        XCTAssertNil(DNSResolver.cleanHostname(nil))
+    }
 
     func testDNSResolverLoopback() {
         // Reverse lookup on 127.0.0.1 typically returns localhost or similar
