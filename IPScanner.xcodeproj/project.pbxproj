@@ -334,6 +334,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-framework CloudKit";
 				PRODUCT_BUNDLE_IDENTIFIER = com.alain.IPScanner;
 				PRODUCT_NAME = IPScanner;
 				REGISTER_APP_GROUPS = YES;
@@ -384,6 +385,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-framework CloudKit";
 				PRODUCT_BUNDLE_IDENTIFIER = com.alain.IPScanner;
 				PRODUCT_NAME = IPScanner;
 				REGISTER_APP_GROUPS = YES;

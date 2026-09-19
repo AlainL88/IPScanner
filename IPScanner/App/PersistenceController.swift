@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import CloudKit
 
 /// Builds the SwiftData container.
 ///
@@ -26,6 +27,8 @@ enum PersistenceController {
     nonisolated(unsafe) private(set) static var lastInitializationError: String?
 
     static let container: ModelContainer = {
+        // Retain link to CloudKit.framework so macOS sandbox allows com.apple.cloudd lookup
+        _ = CKContainer.self
         let allModels = Schema([Device.self, CustomNetworkRange.self, ScanSession.self])
 
         // When running under XCTest, stay local-only so the test host doesn't attempt CloudKit connections
