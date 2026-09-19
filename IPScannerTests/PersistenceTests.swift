@@ -234,6 +234,47 @@ final class PersistenceTests: XCTestCase {
         XCTAssertNil(newDevice.customName)
     }
 
+    @MainActor
+    func testDuplicateDeviceWithSameMACMergesAndPreservesCustomization() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        // Record A: Synced from Mac with custom name
+        let deviceA = Device(
+            ipAddress: "192.168.1.77",
+            macAddress: "AA:11:22:33:44:55",
+            hostname: "synology.local",
+            customName: "NAS Principale",
+            customIcon: "server.rack",
+            isWhitelisted: true
+        )
+        context.insert(deviceA)
+        try context.save()
+
+        // Scan from iPhone sees the device at 192.168.1.77 with same MAC
+        let scanned = ScannedDevice(
+            id: "192.168.1.77",
+            ip: "192.168.1.77",
+            mac: "aa:11:22:33:44:55",
+            hostname: "synology.local",
+            vendor: "Synology",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: false
+        )
+        DeviceStore.upsert(scanned, in: context)
+        try context.save()
+
+        let all = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(all.count, 1)
+        let resolved = try XCTUnwrap(all.first)
+        XCTAssertEqual(resolved.customName, "NAS Principale")
+        XCTAssertEqual(resolved.customIcon, "server.rack")
+        XCTAssertTrue(resolved.isWhitelisted)
+        XCTAssertEqual(resolved.vendor, "Synology")
+    }
+
     func testInferredIcon() {
         XCTAssertEqual(Device.inferredIcon(for: "Alain-iPad.local", ip: "192.168.1.5"), "ipad")
         XCTAssertEqual(Device.inferredIcon(for: "iPhone-15-Pro.local", ip: "192.168.1.6"), "iphone")

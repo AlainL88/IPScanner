@@ -82,7 +82,7 @@ enum DeviceStore {
 
         // 2. Match by distinct Hostname / mDNS / Bonjour (useful on iOS when MAC is restricted)
         if targetDevice == nil, hasDistinctHostname, let hostname {
-            targetDevice = allDevices.first(where: {
+            let matching = allDevices.filter {
                 guard let existingHost = $0.hostname?.trimmingCharacters(in: .whitespacesAndNewlines),
                       isDistinctHostname(existingHost) else { return false }
                 guard existingHost.caseInsensitiveCompare(hostname) == .orderedSame else { return false }
@@ -92,13 +92,30 @@ enum DeviceStore {
                     return false
                 }
                 return true
-            })
+            }
+            if let customMatch = matching.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            }) {
+                targetDevice = customMatch
+            } else {
+                targetDevice = matching.first
+            }
         }
 
         // 3. Fallback: match by IP address, with identity conflict safeguards
         if targetDevice == nil {
             let ip = device.ip
-            if let candidate = allDevices.first(where: { $0.ipAddress == ip }) {
+            let candidates = allDevices.filter { $0.ipAddress == ip }
+            let customCandidate = candidates.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            })
+            let chosenCandidate = customCandidate ?? candidates.first
+
+            if let candidate = chosenCandidate {
                 let macConflict: Bool = {
                     guard hasValidMAC, let mac, let candMAC = candidate.macAddress, ARPTableService.isValidMAC(candMAC) else {
                         return false
@@ -123,11 +140,34 @@ enum DeviceStore {
         }
 
         if let existing = targetDevice {
+            // If any duplicate record with the same MAC carries customizations, merge them
+            if hasValidMAC, let mac {
+                let sameMACDuplicates = allDevices.filter {
+                    $0.persistentModelID != existing.persistentModelID &&
+                    $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
+                }
+                if existing.customName == nil || existing.customName?.isEmpty == true {
+                    existing.customName = sameMACDuplicates.compactMap(\.customName).first(where: { !$0.isEmpty })
+                }
+                if existing.customIcon == nil || existing.customIcon?.isEmpty == true {
+                    existing.customIcon = sameMACDuplicates.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                }
+                if !existing.isWhitelisted && sameMACDuplicates.contains(where: \.isWhitelisted) {
+                    existing.isWhitelisted = true
+                }
+                for duplicate in sameMACDuplicates {
+                    context.delete(duplicate)
+                }
+            }
+
             // If the device migrated to a new IP address, resolve any conflicting record at the new IP
             if existing.ipAddress != device.ip {
                 let ipCollisions = allDevices.filter { $0.persistentModelID != existing.persistentModelID && $0.ipAddress == device.ip }
                 for collision in ipCollisions {
-                    if collision.macAddress == nil || collision.macAddress?.isEmpty == true {
+                    if (collision.macAddress == nil || collision.macAddress?.isEmpty == true) &&
+                       (collision.customName == nil || collision.customName?.isEmpty == true) &&
+                       (collision.customIcon == nil || collision.customIcon?.isEmpty == true) &&
+                       !collision.isWhitelisted {
                         context.delete(collision)
                     } else {
                         collision.isOnline = false
@@ -148,10 +188,13 @@ enum DeviceStore {
             existing.lastSeen = device.lastSeen
             existing.isOnline = device.isOnline
         } else {
-            // Clean up any stale records without MAC at device.ip before inserting
+            // Clean up any stale uncustomized records without MAC at device.ip before inserting
             let ipCollisions = allDevices.filter { $0.ipAddress == device.ip }
             for collision in ipCollisions {
-                if collision.macAddress == nil || collision.macAddress?.isEmpty == true {
+                if (collision.macAddress == nil || collision.macAddress?.isEmpty == true) &&
+                   (collision.customName == nil || collision.customName?.isEmpty == true) &&
+                   (collision.customIcon == nil || collision.customIcon?.isEmpty == true) &&
+                   !collision.isWhitelisted {
                     context.delete(collision)
                 } else {
                     collision.isOnline = false

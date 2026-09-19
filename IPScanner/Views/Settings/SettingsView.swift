@@ -81,6 +81,18 @@ struct SettingsView: View {
                         ? String(localized: "Active")
                         : (PersistenceController.lastInitializationError ?? String(localized: "Local only"))
                 )
+                if let error = PersistenceController.lastSyncError {
+                    LabeledContent(
+                        String(localized: "Sync Issue"),
+                        value: error
+                    )
+                    .foregroundStyle(.orange)
+                } else if let date = PersistenceController.lastSyncDate {
+                    LabeledContent(
+                        String(localized: "Last Sync"),
+                        value: date.formatted(date: .omitted, time: .shortened)
+                    )
+                }
                 LabeledContent(
                     String(localized: "Saved devices"),
                     value: "\(persistedDevices.count)"

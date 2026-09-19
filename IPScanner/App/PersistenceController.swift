@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CloudKit
+import CoreData
 
 /// Builds the SwiftData container.
 ///
@@ -25,6 +26,8 @@ enum PersistenceController {
     /// Tracks whether CloudKit was successfully initialized or if fallback occurred.
     nonisolated(unsafe) private(set) static var isCloudKitEnabled: Bool = false
     nonisolated(unsafe) private(set) static var lastInitializationError: String?
+    nonisolated(unsafe) private(set) static var lastSyncDate: Date?
+    nonisolated(unsafe) private(set) static var lastSyncError: String?
 
     static let container: ModelContainer = {
         // Retain link to CloudKit.framework so macOS sandbox allows com.apple.cloudd lookup
@@ -52,6 +55,7 @@ enum PersistenceController {
                 let container = try ModelContainer(for: allModels, configurations: [cloudConfig, localConfig])
                 isCloudKitEnabled = true
                 lastInitializationError = nil
+                setupCloudKitObserver()
                 return container
             } catch {
                 isCloudKitEnabled = false
@@ -86,5 +90,23 @@ enum PersistenceController {
             for: Schema([Device.self, CustomNetworkRange.self, ScanSession.self]),
             configurations: [config]
         )
+    }
+
+    private static func setupCloudKitObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSPersistentCloudKitContainer.eventChangedNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event else {
+                return
+            }
+            if let error = event.error {
+                lastSyncError = error.localizedDescription
+            } else if event.succeeded {
+                lastSyncDate = event.endDate ?? Date()
+                lastSyncError = nil
+            }
+        }
     }
 }

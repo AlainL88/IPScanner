@@ -612,17 +612,55 @@ struct DeviceDetailView: View {
         }
         let hasValidMAC = ARPTableService.isValidMAC(mac)
 
+        let hostname = device.hostname?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let allDevices = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+
+        // 1. Match by MAC address, preferring customized records
         if hasValidMAC, let mac {
-            let allDevices = (try? context.fetch(FetchDescriptor<Device>())) ?? []
-            persistedDevice = allDevices.first(where: {
+            let matching = allDevices.filter {
                 guard let existingMAC = $0.macAddress else { return false }
                 return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
-            })
+            }
+            if let customMatch = matching.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            }) {
+                persistedDevice = customMatch
+            } else {
+                persistedDevice = matching.first
+            }
         }
 
+        // 2. Match by distinct hostname, preferring customized records
+        if persistedDevice == nil, let hostname, !hostname.isEmpty {
+            let matching = allDevices.filter {
+                guard let existingHost = $0.hostname?.trimmingCharacters(in: .whitespacesAndNewlines), !existingHost.isEmpty else { return false }
+                return existingHost.caseInsensitiveCompare(hostname) == .orderedSame
+            }
+            if let customMatch = matching.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            }) {
+                persistedDevice = customMatch
+            } else {
+                persistedDevice = matching.first
+            }
+        }
+
+        // 3. Fallback: match by IP address, preferring customized records
         if persistedDevice == nil {
-            let request = FetchDescriptor<Device>(predicate: #Predicate { $0.ipAddress == ip })
-            persistedDevice = (try? context.fetch(request))?.first
+            let matching = allDevices.filter { $0.ipAddress == ip }
+            if let customMatch = matching.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            }) {
+                persistedDevice = customMatch
+            } else {
+                persistedDevice = matching.first
+            }
         }
 
         if persistedDevice == nil {

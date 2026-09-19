@@ -48,6 +48,24 @@ struct ScanListView: View {
                 return first
             }
         }
+
+        if let hostname = device.hostname?.trimmingCharacters(in: .whitespacesAndNewlines), !hostname.isEmpty {
+            let hostMatches = persistedDevices.filter {
+                guard let existing = $0.hostname?.trimmingCharacters(in: .whitespacesAndNewlines), !existing.isEmpty else { return false }
+                return existing.caseInsensitiveCompare(hostname) == .orderedSame
+            }
+            if let customized = hostMatches.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
+            }) {
+                return customized
+            }
+            if let first = hostMatches.first {
+                return first
+            }
+        }
+
         let ipMatches = persistedDevices.filter { $0.ipAddress == device.ip }
         if let customized = ipMatches.first(where: {
             ($0.customName != nil && !$0.customName!.isEmpty) ||
