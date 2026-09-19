@@ -59,7 +59,7 @@ struct DeviceDetailView: View {
         .alert(String(localized: "Why is the MAC missing?"), isPresented: $showingMACInfo) {
             Button(String(localized: "OK"), role: .cancel) {}
         } message: {
-            Text(String(localized: "On iOS, the system does not expose the MAC addresses of nearby devices (the ARP table is restricted). This information is available on macOS."))
+            Text(String(localized: "The MAC address could not be resolved from the local ARP table. The device may be protected by a stealth firewall, offline, or located across a network bridge or router."))
         }
     }
 

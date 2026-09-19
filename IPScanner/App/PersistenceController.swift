@@ -22,7 +22,11 @@ enum PersistenceController {
     static let container: ModelContainer = {
         let allModels = Schema([Device.self, CustomNetworkRange.self, ScanSession.self])
 
-        if hasICloudEntitlement {
+        // When running under XCTest, stay local-only so the test host doesn't attempt CloudKit connections
+        let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
+                        NSClassFromString("XCTestCase") != nil
+
+        if !isTesting {
             do {
                 let cloudConfig = ModelConfiguration(
                     "Cloud",
@@ -41,7 +45,7 @@ enum PersistenceController {
             }
         }
 
-        // Local-only store — no CloudKit. Safe on every build/signing setup.
+        // Local-only store — fallback when CloudKit is unavailable (e.g. unsigned simulator or no account).
         let localOnly = ModelConfiguration(schema: allModels, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: allModels, configurations: [localOnly])
@@ -62,12 +66,5 @@ enum PersistenceController {
             for: Schema([Device.self, CustomNetworkRange.self, ScanSession.self]),
             configurations: [config]
         )
-    }
-
-    /// True when iCloud is actually usable from this process: the app carries
-    /// the entitlement AND the user is signed in. `ubiquityIdentityToken` is nil
-    /// in every other case (fresh clone, no capability, iCloud disabled).
-    private static var hasICloudEntitlement: Bool {
-        FileManager.default.ubiquityIdentityToken != nil
     }
 }

@@ -165,8 +165,7 @@ enum DeviceStore {
         guard let devices = try? context.fetch(request) else { return }
         for device in devices where device.isOnline && !seenIPs.contains(device.ipAddress) {
             device.isOnline = false
-            #if os(macOS)
-            // On macOS, if an offline device has no MAC address and no user customizations,
+            // If an offline device has no MAC address and no user customizations,
             // purge it so stale mDNS ghost records don't persist in the database.
             if (device.macAddress == nil || device.macAddress?.isEmpty == true) &&
                (device.customName == nil || device.customName?.isEmpty == true) &&
@@ -174,7 +173,6 @@ enum DeviceStore {
                !device.isWhitelisted {
                 context.delete(device)
             }
-            #endif
         }
         try? context.save()
     }
