@@ -10,6 +10,10 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
+	<!-- Consente la lettura della tabella ARP (MAC e topologia) dentro il sandbox.
+	     Senza, sysctl(NET_RT_FLAGS/RTF_LLINFO) restituisce zero entry. -->
+	<key>com.apple.developer.networking.topology-observation</key>
+	<true/>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
 		<string>iCloud.com.alain.IPScanner</string>

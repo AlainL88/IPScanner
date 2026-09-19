@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>IPScanner needs access to the local network to detect connected devices.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.alain.IPScanner.refresh</string>
+	</array>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_ipscanner._tcp</string>
@@ -39,13 +41,5 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.alain.IPScanner.refresh</string>
-	</array>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 </dict>
 </plist>
