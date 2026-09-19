@@ -426,41 +426,45 @@ struct ScanListView: View {
         }
 
         ToolbarItem(placement: .automatic) {
+            Button {
+                Task { await viewModel.refreshDeviceStatuses() }
+            } label: {
+                Label(String(localized: "Refresh"), systemImage: "arrow.clockwise")
+            }
+            .disabled(viewModel.isScanning || viewModel.devices.isEmpty || viewModel.isRefreshingStatus)
+            .help(String(localized: "Refresh Status (Ping)"))
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+        }
+
+        ToolbarItem(placement: .automatic) {
             Menu {
-                Button {
-                    Task { await viewModel.refreshDeviceStatuses() }
-                } label: {
-                    Label(String(localized: "Refresh Status (Ping)"), systemImage: "arrow.clockwise")
-                }
-                .disabled(viewModel.isScanning || viewModel.devices.isEmpty || viewModel.isRefreshingStatus)
-                .keyboardShortcut("r", modifiers: [.command, .shift])
-
-                Divider()
-
-                Menu {
-                    ForEach(SortKey.allCases) { key in
-                        Button {
-                            appState.sortKey = key
-                            appState.persist()
-                        } label: {
-                            Label(key.label, systemImage: appState.sortKey == key ? "checkmark" : "")
-                        }
-                    }
-                    Divider()
+                ForEach(SortKey.allCases) { key in
                     Button {
-                        appState.sortAscending.toggle()
+                        appState.sortKey = key
                         appState.persist()
                     } label: {
-                        Label(
-                            appState.sortAscending ? String(localized: "Ascending") : String(localized: "Descending"),
-                            systemImage: appState.sortAscending ? "arrow.up" : "arrow.down"
-                        )
+                        Label(key.label, systemImage: appState.sortKey == key ? "checkmark" : "")
                     }
-                } label: {
-                    Label(String(localized: "Sort by"), systemImage: "arrow.up.arrow.down")
                 }
+                Divider()
+                Button {
+                    appState.sortAscending.toggle()
+                    appState.persist()
+                } label: {
+                    Label(
+                        appState.sortAscending ? String(localized: "Ascending") : String(localized: "Descending"),
+                        systemImage: appState.sortAscending ? "arrow.up" : "arrow.down"
+                    )
+                }
+            } label: {
+                Label(String(localized: "Sort"), systemImage: "arrow.up.arrow.down")
+            }
+            .help(String(localized: "Sort by"))
+        }
 
-                Menu {
+        ToolbarItem(placement: .automatic) {
+            Menu {
+                Section(String(localized: "Row size")) {
                     ForEach(RowDensity.allCases) { density in
                         Button {
                             appState.rowDensity = density
@@ -469,11 +473,9 @@ struct ScanListView: View {
                             Label(density.label, systemImage: appState.rowDensity == density ? "checkmark" : "")
                         }
                     }
-                } label: {
-                    Label(String(localized: "Row size"), systemImage: "textformat.size")
                 }
 
-                Menu {
+                Section(String(localized: "Columns")) {
                     ForEach(DeviceColumn.allCases) { column in
                         Toggle(column.label, isOn: Binding(
                             get: { appState.visibleColumns.contains(column) },
@@ -487,13 +489,11 @@ struct ScanListView: View {
                             }
                         ))
                     }
-                } label: {
-                    Label(String(localized: "Columns"), systemImage: "rectangle.grid.1x2")
                 }
             } label: {
-                Label(String(localized: "View options"), systemImage: "slider.horizontal.3")
+                Label(String(localized: "View"), systemImage: "slider.horizontal.3")
             }
-            .accessibilityLabel(String(localized: "View options"))
+            .help(String(localized: "View options"))
         }
 
         #if os(iOS)

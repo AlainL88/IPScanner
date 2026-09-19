@@ -295,7 +295,12 @@ final class ScanViewModel {
                         if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
                             return (ip, true)
                         }
-                        // Stale passive ARP cache entries are NOT used as liveness proof
+                        #if os(macOS)
+                        // 3. Active ARP table entry (crucial for macOS hosts with firewall/stealth mode active)
+                        if let currentMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(currentMAC) {
+                            return (ip, true)
+                        }
+                        #endif
                         return (ip, false)
                     }
                 }
@@ -375,13 +380,19 @@ final class ScanViewModel {
                     guard let mac = entry.macAddress else { continue }
                     let ip = entry.ipAddress
 
-                    // Liveness verification: verify that the IP actively responds to ICMP or TCP
+                    // Liveness verification: verify that the IP responds to ICMP or TCP, or has valid ARP
                     let pingResult = await pingService.ping(host: ip, retries: 1, timeout: 1.0)
                     let isReachable: Bool
                     if pingResult.succeeded {
                         isReachable = true
+                    } else if await PortScanService.isHostReachable(host: ip, timeout: 0.4) {
+                        isReachable = true
                     } else {
-                        isReachable = await PortScanService.isHostReachable(host: ip, timeout: 0.4)
+                        #if os(macOS)
+                        isReachable = ARPTableService.isValidMAC(mac)
+                        #else
+                        isReachable = false
+                        #endif
                     }
                     guard isReachable else { continue }
 

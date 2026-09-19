@@ -136,9 +136,33 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 2. Fast TCP probe fallback for hosts that did not respond to ICMP ping (e.g. firewalled cameras/IoT)
-                let pingDiscoveredIPs = Set(store.all().map(\.ip))
-                let remainingIPs = targetAddressStrings.filter { !pingDiscoveredIPs.contains($0) }
+                // 2. ARP Table discovery & enrichment:
+                // Captures active hosts that replied to Layer 2 ARP during the ping sweep
+                // (crucial for macOS hosts with stealth mode/firewall and IoT devices that drop ICMP ping).
+                continuation.yield(.phase(.arpReading))
+                let arpEntries = ARPTableService.read()
+                let targetARPEntries = arpEntries.filter { entry in
+                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return false }
+                    return targetIPSet.contains(entry.ipAddress)
+                }
+
+                for entry in targetARPEntries {
+                    guard let mac = entry.macAddress else { continue }
+                    let ip = entry.ipAddress
+                    let vendor = await oui.vendorName(forMAC: mac)
+                    let device = store.update(ip: ip, mac: mac, vendor: vendor)
+                    continuation.yield(.device(device))
+                }
+
+                guard !Task.isCancelled else {
+                    bonjourTask.cancel()
+                    continuation.finish()
+                    return
+                }
+
+                // 3. Fast TCP probe fallback for hosts that did not respond to ICMP ping or ARP
+                let discoveredIPs = Set(store.all().map(\.ip))
+                let remainingIPs = targetAddressStrings.filter { !discoveredIPs.contains($0) }
                 if !remainingIPs.isEmpty {
                     await withTaskGroup(of: String?.self) { group in
                         for ip in remainingIPs {
@@ -166,61 +190,22 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 3. ARP Table enrichment:
-                // Enrich all verified active devices in store with MAC and Vendor from the ARP cache.
-                // Note: We do NOT blindly add unverified stale ARP cache entries as online devices.
-                continuation.yield(.phase(.arpReading))
-                let arpEntries = ARPTableService.read()
-                let arpMap = Dictionary(arpEntries.compactMap { entry -> (String, String)? in
-                    guard let mac = entry.macAddress, ARPTableService.isValidMAC(mac) else { return nil }
-                    return (entry.ipAddress, mac)
-                }, uniquingKeysWith: { first, _ in first })
-
-                for dev in store.all() {
-                    let mac = dev.mac ?? arpMap[dev.ip]
-                    if let mac, ARPTableService.isValidMAC(mac) {
-                        let vendor: String?
-                        if let existingVendor = dev.vendor {
-                            vendor = existingVendor
-                        } else {
-                            vendor = await oui.vendorName(forMAC: mac)
-                        }
-                        let updated = store.update(ip: dev.ip, mac: mac, vendor: vendor)
-                        continuation.yield(.device(updated))
-                    }
-                }
-
-                guard !Task.isCancelled else {
-                    bonjourTask.cancel()
-                    continuation.finish()
-                    return
-                }
-
                 // 4. Bonjour / mDNS discovery:
-                // Resolves hostnames for detected devices and discovers mDNS-broadcasting hosts.
+                // Active mDNS hosts are verified alive on the network (e.g. Apple Macs, iOS devices, AirPlay receivers).
                 if includeBonjour {
                     continuation.yield(.phase(.bonjourDiscovery))
                     let bonjourHostnames = await bonjourTask.value
                     for (ip, hostname) in bonjourHostnames {
                         if targetIPSet.contains(ip) {
-                            if store.get(ip) != nil {
-                                let device = store.update(ip: ip, hostname: hostname)
-                                continuation.yield(.device(device))
+                            let mac = ARPTableService.macAddress(for: ip)
+                            let vendor: String?
+                            if let mac, ARPTableService.isValidMAC(mac) {
+                                vendor = await oui.vendorName(forMAC: mac)
                             } else {
-                                let isPingOnline = (await pingService.ping(host: ip, retries: 1, timeout: 0.5)).succeeded
-                                let isTcpOnline = isPingOnline ? false : await PortScanService.isHostReachable(host: ip, timeout: 0.3)
-                                if isPingOnline || isTcpOnline {
-                                    let mac = ARPTableService.macAddress(for: ip)
-                                    let vendor: String?
-                                    if let mac, ARPTableService.isValidMAC(mac) {
-                                        vendor = await oui.vendorName(forMAC: mac)
-                                    } else {
-                                        vendor = nil
-                                    }
-                                    let device = store.update(ip: ip, mac: mac, hostname: hostname, vendor: vendor)
-                                    continuation.yield(.device(device))
-                                }
+                                vendor = nil
                             }
+                            let device = store.update(ip: ip, mac: mac, hostname: hostname, vendor: vendor)
+                            continuation.yield(.device(device))
                         }
                     }
                 }
@@ -230,7 +215,7 @@ public actor NetworkScannerCoordinator {
                     return
                 }
 
-                // 4. Reverse DNS fallback for devices missing a hostname (concurrent):
+                // 5. Reverse DNS fallback for devices missing a hostname (concurrent):
                 let discovered = store.all()
                 let missingHostnameIPs = discovered.filter { $0.hostname == nil || $0.hostname?.isEmpty == true }.map(\.ip)
                 if !missingHostnameIPs.isEmpty {
@@ -252,20 +237,17 @@ public actor NetworkScannerCoordinator {
                     }
                 }
 
-                // 5. Local host identification fallback:
+                // 6. Local host identification fallback:
                 if let localIP = SubnetService.primaryIPv4Interface()?.ipAddress {
-                    let all = store.all()
-                    if let localDev = all.first(where: { $0.ip == localIP }), localDev.hostname == nil || localDev.hostname?.isEmpty == true {
-                        #if os(macOS)
-                        let localName = Host.current().localizedName ?? DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
-                        #else
-                        let localName = DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
-                        #endif
-                        if let localName, !localName.isEmpty {
-                            let updated = store.update(ip: localIP, hostname: localName)
-                            continuation.yield(.device(updated))
-                        }
-                    }
+                    let localMAC = ARPTableService.macAddress(for: localIP)
+                    let localVendor = (localMAC != nil && ARPTableService.isValidMAC(localMAC)) ? await oui.vendorName(forMAC: localMAC!) : nil
+                    #if os(macOS)
+                    let localName = Host.current().localizedName ?? DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
+                    #else
+                    let localName = DNSResolver.cleanHostname(ProcessInfo.processInfo.hostName)
+                    #endif
+                    let updated = store.update(ip: localIP, mac: localMAC, hostname: localName, vendor: localVendor)
+                    continuation.yield(.device(updated))
                 }
 
                 continuation.yield(.phase(.finishing))
