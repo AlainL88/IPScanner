@@ -34,13 +34,29 @@ struct ScanListView: View {
         }()
 
         if let mac {
-            if let match = persistedDevices.first(where: {
+            let macMatches = persistedDevices.filter {
                 $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
+            }
+            if let customized = macMatches.first(where: {
+                ($0.customName != nil && !$0.customName!.isEmpty) ||
+                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                $0.isWhitelisted
             }) {
-                return match
+                return customized
+            }
+            if let first = macMatches.first {
+                return first
             }
         }
-        return persistedDevices.first(where: { $0.ipAddress == device.ip })
+        let ipMatches = persistedDevices.filter { $0.ipAddress == device.ip }
+        if let customized = ipMatches.first(where: {
+            ($0.customName != nil && !$0.customName!.isEmpty) ||
+            ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+            $0.isWhitelisted
+        }) {
+            return customized
+        }
+        return ipMatches.first
     }
 
     var body: some View {

@@ -19,6 +19,12 @@ import SwiftData
 /// capability, simulators without iCloud — we use a purely local store so the
 /// app always launches without crashing.
 enum PersistenceController {
+    static let iCloudContainerIdentifier = "iCloud.com.alain.IPScanner"
+
+    /// Tracks whether CloudKit was successfully initialized or if fallback occurred.
+    nonisolated(unsafe) private(set) static var isCloudKitEnabled: Bool = false
+    nonisolated(unsafe) private(set) static var lastInitializationError: String?
+
     static let container: ModelContainer = {
         let allModels = Schema([Device.self, CustomNetworkRange.self, ScanSession.self])
 
@@ -32,21 +38,32 @@ enum PersistenceController {
                     "Cloud",
                     schema: Schema([Device.self, CustomNetworkRange.self]),
                     isStoredInMemoryOnly: false,
-                    cloudKitDatabase: .automatic
+                    cloudKitDatabase: .private(iCloudContainerIdentifier)
                 )
                 let localConfig = ModelConfiguration(
                     "Local",
                     schema: Schema([ScanSession.self]),
-                    isStoredInMemoryOnly: false
+                    isStoredInMemoryOnly: false,
+                    cloudKitDatabase: .none
                 )
-                return try ModelContainer(for: allModels, configurations: [cloudConfig, localConfig])
+                let container = try ModelContainer(for: allModels, configurations: [cloudConfig, localConfig])
+                isCloudKitEnabled = true
+                lastInitializationError = nil
+                return container
             } catch {
+                isCloudKitEnabled = false
+                lastInitializationError = error.localizedDescription
                 NSLog("SwiftData/CloudKit container unavailable (%@); using a local-only store.", String(describing: error))
             }
         }
 
         // Local-only store — fallback when CloudKit is unavailable (e.g. unsigned simulator or no account).
-        let localOnly = ModelConfiguration(schema: allModels, isStoredInMemoryOnly: false)
+        let localOnly = ModelConfiguration(
+            "LocalOnly",
+            schema: allModels,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none
+        )
         do {
             return try ModelContainer(for: allModels, configurations: [localOnly])
         } catch {

@@ -48,10 +48,33 @@ enum DeviceStore {
                 guard let existingMAC = $0.macAddress else { return false }
                 return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
             }
-            if let first = matching.first {
-                targetDevice = first
+            if !matching.isEmpty {
+                // If any matching record carries user customization, prefer it as targetDevice
+                let customMatch = matching.first(where: {
+                    ($0.customName != nil && !$0.customName!.isEmpty) ||
+                    ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
+                    $0.isWhitelisted
+                })
+                let chosen = customMatch ?? matching.first!
+                targetDevice = chosen
+
+                // Preserve any custom metadata across duplicates before cleaning them up
+                let preservedName = matching.compactMap(\.customName).first(where: { !$0.isEmpty })
+                let preservedIcon = matching.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                let preservedWhitelisted = matching.contains(where: \.isWhitelisted)
+
+                if chosen.customName == nil || chosen.customName?.isEmpty == true {
+                    chosen.customName = preservedName
+                }
+                if chosen.customIcon == nil || chosen.customIcon?.isEmpty == true {
+                    chosen.customIcon = preservedIcon
+                }
+                if !chosen.isWhitelisted && preservedWhitelisted {
+                    chosen.isWhitelisted = true
+                }
+
                 // Clean up any extraneous duplicates with the same MAC
-                for duplicate in matching.dropFirst() {
+                for duplicate in matching where duplicate.persistentModelID != chosen.persistentModelID {
                     context.delete(duplicate)
                 }
             }

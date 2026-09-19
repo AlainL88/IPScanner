@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 #if os(iOS)
 import UIKit
 import BackgroundTasks
@@ -13,6 +14,7 @@ import BackgroundTasks
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
+    @Query private var persistedDevices: [Device]
     @State private var showingCrashConfirm = false
 
     var body: some View {
@@ -69,6 +71,26 @@ struct SettingsView: View {
                             appState.persist()
                         }
                     ))
+                }
+            }
+
+            Section(String(localized: "iCloud Sync")) {
+                LabeledContent(
+                    String(localized: "Status"),
+                    value: PersistenceController.isCloudKitEnabled
+                        ? String(localized: "Active")
+                        : (PersistenceController.lastInitializationError ?? String(localized: "Local only"))
+                )
+                LabeledContent(
+                    String(localized: "Saved devices"),
+                    value: "\(persistedDevices.count)"
+                )
+                let customCount = persistedDevices.filter { $0.customName != nil && !$0.customName!.isEmpty }.count
+                if customCount > 0 {
+                    LabeledContent(
+                        String(localized: "Customized devices"),
+                        value: "\(customCount)"
+                    )
                 }
             }
 
