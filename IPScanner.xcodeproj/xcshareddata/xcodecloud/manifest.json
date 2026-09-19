@@ -1,0 +1,9 @@
+{
+  "id" : "03378171-89ef-4f0f-af1c-7cb487e697f9",
+  "targets" : [
+    {
+      "id" : "CF5AE425-56C7-4E33-9F94-B103195AAC66",
+      "name" : "IP Scanner - scan network"
+    }
+  ]
+}
