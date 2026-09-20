@@ -359,4 +359,58 @@ final class ScanViewModelTests: XCTestCase {
         // SwiftData record should have backfilled MAC
         XCTAssertEqual(persisted.macAddress?.caseInsensitiveCompare(hardwareMAC), .orderedSame)
     }
+
+    func testRefreshDeviceStatusesDoesNotDeleteRemoteCustomizedDuplicateRecord() async throws {
+        // In-memory active device list has a device without custom name
+        let activeDevice = ScannedDevice(
+            id: "192.168.1.50",
+            ip: "192.168.1.50",
+            mac: "AA:BB:CC:11:22:33",
+            hostname: "camera.local",
+            vendor: "D-Link",
+            firstSeen: Date().addingTimeInterval(-3600),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: true,
+            isNew: false
+        )
+        viewModel.devices = [activeDevice]
+
+        // Record 1: Mac local record without customizations
+        let localRecord = Device(
+            ipAddress: "192.168.1.50",
+            macAddress: "AA:BB:CC:11:22:33",
+            hostname: "camera.local",
+            customName: nil,
+            firstSeen: Date().addingTimeInterval(-7200),
+            lastSeen: Date().addingTimeInterval(-3600),
+            isOnline: true
+        )
+        // Record 2: Remote record synced from iPhone with user customizations
+        let remoteRecord = Device(
+            ipAddress: "192.168.1.50",
+            macAddress: "AA:BB:CC:11:22:33",
+            hostname: "camera.local",
+            customName: "Camera Ingresso",
+            customIcon: "video.fill",
+            isWhitelisted: true,
+            firstSeen: Date().addingTimeInterval(-7200),
+            lastSeen: Date().addingTimeInterval(-60), // recently updated on iPhone
+            isOnline: true
+        )
+        context.insert(localRecord)
+        context.insert(remoteRecord)
+        try context.save()
+
+        // Periodic status check runs on Mac
+        await viewModel.refreshDeviceStatuses()
+
+        let allPersisted = try context.fetch(FetchDescriptor<Device>())
+        let matching = allPersisted.filter { $0.macAddress?.caseInsensitiveCompare("AA:BB:CC:11:22:33") == .orderedSame }
+        // Should merge duplicates into 1 record and NEVER delete the custom name/icon/whitelist
+        XCTAssertEqual(matching.count, 1)
+        let surviving = try XCTUnwrap(matching.first)
+        XCTAssertEqual(surviving.customName, "Camera Ingresso")
+        XCTAssertEqual(surviving.customIcon, "video.fill")
+        XCTAssertTrue(surviving.isWhitelisted)
+    }
 }

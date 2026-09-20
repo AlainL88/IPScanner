@@ -275,6 +275,98 @@ final class PersistenceTests: XCTestCase {
         XCTAssertEqual(resolved.vendor, "Synology")
     }
 
+    @MainActor
+    func testDuplicateDeviceWithSameMACPrefersMoreRecentCustomName() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        let olderDate = Date().addingTimeInterval(-3600)
+        let newerDate = Date().addingTimeInterval(-60)
+
+        // Record A: Older record created on Mac
+        let deviceA = Device(
+            ipAddress: "192.168.1.77",
+            macAddress: "AA:11:22:33:44:55",
+            hostname: "synology.local",
+            customName: "Vecchio Nome",
+            lastSeen: olderDate
+        )
+        // Record B: Newer record created/edited on iPhone with custom icon and whitelist
+        let deviceB = Device(
+            ipAddress: "192.168.1.77",
+            macAddress: "AA:11:22:33:44:55",
+            hostname: "synology.local",
+            customName: "Nuovo Nome iPhone",
+            customIcon: "server.rack",
+            isWhitelisted: true,
+            lastSeen: newerDate
+        )
+        context.insert(deviceA)
+        context.insert(deviceB)
+        try context.save()
+
+        let scanned = ScannedDevice(
+            id: "192.168.1.77",
+            ip: "192.168.1.77",
+            mac: "AA:11:22:33:44:55",
+            hostname: "synology.local",
+            vendor: "Synology",
+            firstSeen: olderDate,
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: false
+        )
+        DeviceStore.upsert(scanned, in: context)
+        try context.save()
+
+        let all = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(all.count, 1)
+        let resolved = try XCTUnwrap(all.first)
+        XCTAssertEqual(resolved.customName, "Nuovo Nome iPhone")
+        XCTAssertEqual(resolved.customIcon, "server.rack")
+        XCTAssertTrue(resolved.isWhitelisted)
+    }
+
+    @MainActor
+    func testUpsertMergesAndDeletesUnMACDuplicateAtSameIP() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        // Record A: Created on iOS previously with no MAC address
+        let deviceA = Device(
+            ipAddress: "192.168.1.50",
+            macAddress: nil,
+            hostname: "camera.local",
+            customName: "Vecchia Camera",
+            isWhitelisted: true
+        )
+        context.insert(deviceA)
+        try context.save()
+
+        // Incoming scan has resolved MAC address
+        let scanned = ScannedDevice(
+            id: "192.168.1.50",
+            ip: "192.168.1.50",
+            mac: "AA:BB:CC:DD:EE:11",
+            hostname: "camera.local",
+            vendor: "D-Link",
+            firstSeen: Date(),
+            lastSeen: Date(),
+            isOnline: true,
+            isNew: false
+        )
+        DeviceStore.upsert(scanned, in: context)
+        try context.save()
+
+        let all = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(all.count, 1)
+        let resolved = try XCTUnwrap(all.first)
+        XCTAssertEqual(resolved.ipAddress, "192.168.1.50")
+        XCTAssertEqual(resolved.macAddress, "AA:BB:CC:DD:EE:11")
+        XCTAssertEqual(resolved.customName, "Vecchia Camera")
+        XCTAssertTrue(resolved.isWhitelisted)
+    }
+
     func testInferredIcon() {
         XCTAssertEqual(Device.inferredIcon(for: "Alain-iPad.local", ip: "192.168.1.5"), "ipad")
         XCTAssertEqual(Device.inferredIcon(for: "iPhone-15-Pro.local", ip: "192.168.1.6"), "iphone")

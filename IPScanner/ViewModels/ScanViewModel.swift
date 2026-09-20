@@ -361,38 +361,8 @@ final class ScanViewModel {
                 }
 
                 // Persist status updates in SwiftData
-                let allPersisted = (try? context.fetch(FetchDescriptor<Device>())) ?? []
-                for (ip, isOnline) in updatedStatuses {
-                    if let match = allPersisted.first(where: { $0.ipAddress == ip }) {
-                        if match.isOnline != isOnline {
-                            match.isOnline = isOnline
-                        }
-                        if isOnline {
-                            match.lastSeen = now
-                        }
-
-                        let resolvedMAC: String? = {
-                            if let mac = match.macAddress, ARPTableService.isValidMAC(mac) { return mac }
-                            if ip == primaryIface?.ipAddress { return primaryIface?.hardwareAddress }
-                            if let arpMAC = ARPTableService.macAddress(for: ip), ARPTableService.isValidMAC(arpMAC) {
-                                return arpMAC
-                            }
-                            return nil
-                        }()
-
-                        if let resolvedMAC, ARPTableService.isValidMAC(resolvedMAC) {
-                            if match.macAddress == nil || match.macAddress?.caseInsensitiveCompare(resolvedMAC) != .orderedSame {
-                                match.macAddress = resolvedMAC
-                                for stale in allPersisted where stale.persistentModelID != match.persistentModelID &&
-                                    stale.macAddress?.caseInsensitiveCompare(resolvedMAC) == .orderedSame {
-                                    context.delete(stale)
-                                }
-                            }
-                            if match.vendor == nil || match.vendor?.isEmpty == true {
-                                match.vendor = OUILookupService.shared.vendorNameSync(forMAC: resolvedMAC)
-                            }
-                        }
-                    }
+                for device in devices {
+                    DeviceStore.upsert(device, in: context)
                 }
                 try? context.save()
             }

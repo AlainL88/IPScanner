@@ -49,29 +49,30 @@ enum DeviceStore {
                 return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
             }
             if !matching.isEmpty {
-                // If any matching record carries user customization, prefer it as targetDevice
-                let customMatch = matching.first(where: {
-                    ($0.customName != nil && !$0.customName!.isEmpty) ||
-                    ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
-                    $0.isWhitelisted
-                })
-                let chosen = customMatch ?? matching.first!
+                // Sort matching so that records with custom metadata and more recent edits come first
+                let sortedMatching = matching.sorted { a, b in
+                    let aHasCustom = (a.customName?.isEmpty == false) || (a.customIcon?.isEmpty == false) || a.isWhitelisted
+                    let bHasCustom = (b.customName?.isEmpty == false) || (b.customIcon?.isEmpty == false) || b.isWhitelisted
+                    if aHasCustom != bHasCustom {
+                        return aHasCustom && !bHasCustom
+                    }
+                    return a.lastSeen > b.lastSeen
+                }
+                let chosen = sortedMatching.first!
                 targetDevice = chosen
 
                 // Preserve any custom metadata across duplicates before cleaning them up
-                let preservedName = matching.compactMap(\.customName).first(where: { !$0.isEmpty })
-                let preservedIcon = matching.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                let preservedName = sortedMatching.compactMap(\.customName).first(where: { !$0.isEmpty })
+                let preservedIcon = sortedMatching.compactMap(\.customIcon).first(where: { !$0.isEmpty })
                 let preservedWhitelisted = matching.contains(where: \.isWhitelisted)
 
-                if chosen.customName == nil || chosen.customName?.isEmpty == true {
-                    chosen.customName = preservedName
-                }
-                if chosen.customIcon == nil || chosen.customIcon?.isEmpty == true {
-                    chosen.customIcon = preservedIcon
-                }
-                if !chosen.isWhitelisted && preservedWhitelisted {
+                chosen.customName = preservedName
+                chosen.customIcon = preservedIcon
+                if preservedWhitelisted {
                     chosen.isWhitelisted = true
                 }
+                chosen.firstSeen = matching.map(\.firstSeen).min() ?? chosen.firstSeen
+                chosen.lastSeen = max(chosen.lastSeen, matching.map(\.lastSeen).max() ?? chosen.lastSeen)
 
                 // Clean up any extraneous duplicates with the same MAC
                 for duplicate in matching where duplicate.persistentModelID != chosen.persistentModelID {
@@ -80,7 +81,7 @@ enum DeviceStore {
             }
         }
 
-        // 2. Match by distinct Hostname / mDNS / Bonjour (useful on iOS when MAC is restricted)
+        // 2. Match by distinct Hostname / mDNS / Bonjour (when MAC is not yet available)
         if targetDevice == nil, hasDistinctHostname, let hostname {
             let matching = allDevices.filter {
                 guard let existingHost = $0.hostname?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -124,7 +125,10 @@ enum DeviceStore {
                 }()
 
                 let hostConflict: Bool = {
-                    guard hasDistinctHostname, let hostname,
+                    // Only consider host conflict when the candidate already has an authoritative MAC
+                    // and incoming has a distinctly different hostname without a matching MAC.
+                    guard candidate.macAddress != nil && !hasValidMAC,
+                          hasDistinctHostname, let hostname,
                           let candHost = candidate.hostname, isDistinctHostname(candHost) else {
                         return false
                     }
@@ -146,18 +150,48 @@ enum DeviceStore {
                     $0.persistentModelID != existing.persistentModelID &&
                     $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
                 }
+                if !sameMACDuplicates.isEmpty {
+                    let allSameMAC = [existing] + sameMACDuplicates
+                    let sortedSameMAC = allSameMAC.sorted { a, b in
+                        let aHasCustom = (a.customName?.isEmpty == false) || (a.customIcon?.isEmpty == false) || a.isWhitelisted
+                        let bHasCustom = (b.customName?.isEmpty == false) || (b.customIcon?.isEmpty == false) || b.isWhitelisted
+                        if aHasCustom != bHasCustom {
+                            return aHasCustom && !bHasCustom
+                        }
+                        return a.lastSeen > b.lastSeen
+                    }
+                    if existing.customName == nil || existing.customName?.isEmpty == true {
+                        existing.customName = sortedSameMAC.compactMap(\.customName).first(where: { !$0.isEmpty })
+                    }
+                    if existing.customIcon == nil || existing.customIcon?.isEmpty == true {
+                        existing.customIcon = sortedSameMAC.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                    }
+                    if allSameMAC.contains(where: \.isWhitelisted) {
+                        existing.isWhitelisted = true
+                    }
+                    for duplicate in sameMACDuplicates {
+                        context.delete(duplicate)
+                    }
+                }
+            }
+
+            // Also clean up any un-MAC'd duplicate records at the same IP
+            let sameIPDuplicates = allDevices.filter {
+                $0.persistentModelID != existing.persistentModelID &&
+                $0.ipAddress == device.ip &&
+                ($0.macAddress == nil || $0.macAddress?.isEmpty == true)
+            }
+            for dup in sameIPDuplicates {
                 if existing.customName == nil || existing.customName?.isEmpty == true {
-                    existing.customName = sameMACDuplicates.compactMap(\.customName).first(where: { !$0.isEmpty })
+                    existing.customName = dup.customName
                 }
                 if existing.customIcon == nil || existing.customIcon?.isEmpty == true {
-                    existing.customIcon = sameMACDuplicates.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                    existing.customIcon = dup.customIcon
                 }
-                if !existing.isWhitelisted && sameMACDuplicates.contains(where: \.isWhitelisted) {
+                if dup.isWhitelisted {
                     existing.isWhitelisted = true
                 }
-                for duplicate in sameMACDuplicates {
-                    context.delete(duplicate)
-                }
+                context.delete(dup)
             }
 
             // If the device migrated to a new IP address, resolve any conflicting record at the new IP

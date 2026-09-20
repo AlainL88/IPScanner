@@ -55,6 +55,11 @@ struct DeviceDetailView: View {
         #endif
         .task { loadPersistedDevice() }
         .onDisappear { saveCustomName() }
+        .onChange(of: nameFocused) { _, isFocused in
+            if !isFocused {
+                saveCustomName()
+            }
+        }
         .sheet(isPresented: $showingIconPicker) { iconPickerSheet }
         .alert(String(localized: "Why is the MAC missing?"), isPresented: $showingMACInfo) {
             Button(String(localized: "OK"), role: .cancel) {}
@@ -252,6 +257,7 @@ struct DeviceDetailView: View {
             get: { persistedDevice?.isWhitelisted ?? false },
             set: { newValue in
                 persistedDevice?.isWhitelisted = newValue
+                persistedDevice?.lastSeen = Date()
                 try? context.save()
             }
         )
@@ -526,6 +532,7 @@ struct DeviceDetailView: View {
                                     let isSelected = persistedDevice?.customIcon == name || (persistedDevice?.customIcon == nil && icon == name)
                                     Button {
                                         persistedDevice?.customIcon = name
+                                        persistedDevice?.lastSeen = Date()
                                         try? context.save()
                                         showingIconPicker = false
                                     } label: {
@@ -621,14 +628,35 @@ struct DeviceDetailView: View {
                 guard let existingMAC = $0.macAddress else { return false }
                 return existingMAC.caseInsensitiveCompare(mac) == .orderedSame
             }
-            if let customMatch = matching.first(where: {
-                ($0.customName != nil && !$0.customName!.isEmpty) ||
-                ($0.customIcon != nil && !$0.customIcon!.isEmpty) ||
-                $0.isWhitelisted
-            }) {
-                persistedDevice = customMatch
-            } else {
-                persistedDevice = matching.first
+            if !matching.isEmpty {
+                let sortedMatching = matching.sorted { a, b in
+                    let aHasCustom = (a.customName?.isEmpty == false) || (a.customIcon?.isEmpty == false) || a.isWhitelisted
+                    let bHasCustom = (b.customName?.isEmpty == false) || (b.customIcon?.isEmpty == false) || b.isWhitelisted
+                    if aHasCustom != bHasCustom {
+                        return aHasCustom && !bHasCustom
+                    }
+                    return a.lastSeen > b.lastSeen
+                }
+                let chosen = sortedMatching.first!
+                persistedDevice = chosen
+
+                if matching.count > 1 {
+                    let duplicates = matching.filter { $0.persistentModelID != chosen.persistentModelID }
+                    let preservedName = sortedMatching.compactMap(\.customName).first(where: { !$0.isEmpty })
+                    let preservedIcon = sortedMatching.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                    if chosen.customName == nil || chosen.customName?.isEmpty == true {
+                        chosen.customName = preservedName
+                    }
+                    if chosen.customIcon == nil || chosen.customIcon?.isEmpty == true {
+                        chosen.customIcon = preservedIcon
+                    }
+                    if matching.contains(where: \.isWhitelisted) {
+                        chosen.isWhitelisted = true
+                    }
+                    for dup in duplicates {
+                        context.delete(dup)
+                    }
+                }
             }
         }
 
@@ -683,6 +711,34 @@ struct DeviceDetailView: View {
             }
             if hasValidMAC, let mac {
                 persisted.macAddress = mac
+                // Deduplicate any other records sharing this MAC
+                let duplicates = allDevices.filter {
+                    $0.persistentModelID != persisted.persistentModelID &&
+                    $0.macAddress?.caseInsensitiveCompare(mac) == .orderedSame
+                }
+                if !duplicates.isEmpty {
+                    let allMatching = [persisted] + duplicates
+                    let sortedMatching = allMatching.sorted { a, b in
+                        let aHasCustom = (a.customName?.isEmpty == false) || (a.customIcon?.isEmpty == false) || a.isWhitelisted
+                        let bHasCustom = (b.customName?.isEmpty == false) || (b.customIcon?.isEmpty == false) || b.isWhitelisted
+                        if aHasCustom != bHasCustom {
+                            return aHasCustom && !bHasCustom
+                        }
+                        return a.lastSeen > b.lastSeen
+                    }
+                    if persisted.customName == nil || persisted.customName?.isEmpty == true {
+                        persisted.customName = sortedMatching.compactMap(\.customName).first(where: { !$0.isEmpty })
+                    }
+                    if persisted.customIcon == nil || persisted.customIcon?.isEmpty == true {
+                        persisted.customIcon = sortedMatching.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+                    }
+                    if allMatching.contains(where: \.isWhitelisted) {
+                        persisted.isWhitelisted = true
+                    }
+                    for dup in duplicates {
+                        context.delete(dup)
+                    }
+                }
             }
             if let hostname = device.hostname, !hostname.isEmpty, persisted.hostname == nil {
                 persisted.hostname = hostname
@@ -705,6 +761,7 @@ struct DeviceDetailView: View {
         }
         let trimmed = customName.trimmingCharacters(in: .whitespacesAndNewlines)
         persistedDevice?.customName = trimmed.isEmpty ? nil : trimmed
+        persistedDevice?.lastSeen = Date()
         try? context.save()
     }
 
