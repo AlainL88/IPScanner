@@ -276,4 +276,102 @@ enum DeviceStore {
         }
         try? context.save()
     }
+
+    /// Consolidates and optimizes the persistent database:
+    /// 1. Merges all duplicate records sharing the same MAC address, preserving the newest customName,
+    ///    customIcon, whitelist status, and earliest/latest dates, deleting extra copies.
+    /// 2. Merges records sharing the same IP address where one has an authoritative MAC and the other has no MAC.
+    /// 3. Purges stale "ghost" devices that have no user customizations (no customName, no customIcon,
+    ///    not whitelisted) and are currently offline.
+    /// Returns the number of redundant / stale records removed.
+    @discardableResult
+    static func consolidateDatabase(in context: ModelContext, purgeOfflineUncustomized: Bool = true) -> Int {
+        let allDevices = (try? context.fetch(FetchDescriptor<Device>())) ?? []
+        var deletedCount = 0
+        var deletedIDs = Set<PersistentIdentifier>()
+
+        // 1. Group by valid MAC address
+        var macGroups: [String: [Device]] = [:]
+        for device in allDevices {
+            if let rawMAC = device.macAddress?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased(),
+               ARPTableService.isValidMAC(rawMAC) {
+                macGroups[rawMAC, default: []].append(device)
+            }
+        }
+
+        for (_, group) in macGroups where group.count > 1 {
+            let sorted = group.sorted { a, b in
+                let aHasCustom = (a.customName?.isEmpty == false) || (a.customIcon?.isEmpty == false) || a.isWhitelisted
+                let bHasCustom = (b.customName?.isEmpty == false) || (b.customIcon?.isEmpty == false) || b.isWhitelisted
+                if aHasCustom != bHasCustom {
+                    return aHasCustom && !bHasCustom
+                }
+                return a.lastSeen > b.lastSeen
+            }
+            let chosen = sorted.first!
+            let preservedName = sorted.compactMap(\.customName).first(where: { !$0.isEmpty })
+            let preservedIcon = sorted.compactMap(\.customIcon).first(where: { !$0.isEmpty })
+            let preservedWhitelisted = group.contains(where: \.isWhitelisted)
+
+            chosen.customName = preservedName
+            chosen.customIcon = preservedIcon
+            if preservedWhitelisted {
+                chosen.isWhitelisted = true
+            }
+            chosen.firstSeen = group.map(\.firstSeen).min() ?? chosen.firstSeen
+            chosen.lastSeen = max(chosen.lastSeen, group.map(\.lastSeen).max() ?? chosen.lastSeen)
+
+            for dup in group where dup.persistentModelID != chosen.persistentModelID {
+                context.delete(dup)
+                deletedIDs.insert(dup.persistentModelID)
+                deletedCount += 1
+            }
+        }
+
+        // 2. Filter remaining devices to merge un-MAC'd duplicates at the same IP
+        let remaining = (try? context.fetch(FetchDescriptor<Device>()))?.filter { !deletedIDs.contains($0.persistentModelID) } ?? []
+        var ipGroups: [String: [Device]] = [:]
+        for dev in remaining {
+            ipGroups[dev.ipAddress, default: []].append(dev)
+        }
+
+        for (_, group) in ipGroups where group.count > 1 {
+            if let authoritative = group.first(where: { $0.macAddress != nil && ARPTableService.isValidMAC($0.macAddress) }) {
+                for dup in group where dup.persistentModelID != authoritative.persistentModelID {
+                    if dup.macAddress == nil || !ARPTableService.isValidMAC(dup.macAddress) {
+                        if authoritative.customName == nil || authoritative.customName?.isEmpty == true {
+                            authoritative.customName = dup.customName
+                        }
+                        if authoritative.customIcon == nil || authoritative.customIcon?.isEmpty == true {
+                            authoritative.customIcon = dup.customIcon
+                        }
+                        if dup.isWhitelisted {
+                            authoritative.isWhitelisted = true
+                        }
+                        context.delete(dup)
+                        deletedIDs.insert(dup.persistentModelID)
+                        deletedCount += 1
+                    }
+                }
+            }
+        }
+
+        // 3. Purge offline records that have zero user customizations
+        if purgeOfflineUncustomized {
+            let active = (try? context.fetch(FetchDescriptor<Device>()))?.filter { !deletedIDs.contains($0.persistentModelID) } ?? []
+            for dev in active {
+                let hasCustom = (dev.customName?.isEmpty == false) || (dev.customIcon?.isEmpty == false) || dev.isWhitelisted
+                if !hasCustom && !dev.isOnline {
+                    context.delete(dev)
+                    deletedIDs.insert(dev.persistentModelID)
+                    deletedCount += 1
+                }
+            }
+        }
+
+        if deletedCount > 0 {
+            try? context.save()
+        }
+        return deletedCount
+    }
 }

@@ -26,6 +26,7 @@ struct RootView: View {
         .task {
             if scanViewModel == nil {
                 scanViewModel = ScanViewModel(context: context, appState: appState)
+                DeviceStore.consolidateDatabase(in: context)
             }
         }
     }

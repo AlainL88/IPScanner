@@ -14,8 +14,10 @@ import BackgroundTasks
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.modelContext) private var context
     @Query private var persistedDevices: [Device]
     @State private var showingCrashConfirm = false
+    @State private var cleanupResultMessage: String?
 
     var body: some View {
         @Bindable var appState = appState
@@ -103,6 +105,22 @@ struct SettingsView: View {
                         String(localized: "Customized devices"),
                         value: "\(customCount)"
                     )
+                }
+
+                Button {
+                    let removed = DeviceStore.consolidateDatabase(in: context)
+                    if removed > 0 {
+                        cleanupResultMessage = String(format: String(localized: "Removed %lld duplicate or stale records."), removed)
+                    } else {
+                        cleanupResultMessage = String(localized: "Database is already optimized.")
+                    }
+                } label: {
+                    Label(String(localized: "Clean up database"), systemImage: "sparkles")
+                }
+                if let cleanupResultMessage {
+                    Text(cleanupResultMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 

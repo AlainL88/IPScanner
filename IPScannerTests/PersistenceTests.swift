@@ -367,6 +367,72 @@ final class PersistenceTests: XCTestCase {
         XCTAssertTrue(resolved.isWhitelisted)
     }
 
+    @MainActor
+    func testConsolidateDatabaseMergesDuplicatesAndPurgesGhosts() throws {
+        let container = PersistenceController.makeInMemoryContainer()
+        let context = container.mainContext
+
+        // 1. Device 1: Customized online device
+        let dev1 = Device(
+            ipAddress: "192.168.1.10",
+            macAddress: "AA:11:22:33:44:01",
+            hostname: "tv.local",
+            customName: "Smart TV",
+            isOnline: true
+        )
+        // 2. Device 2: Duplicate of Device 1 with same MAC but old IP and no custom name
+        let dev2 = Device(
+            ipAddress: "192.168.1.15",
+            macAddress: "AA:11:22:33:44:01",
+            hostname: "tv.local",
+            customName: nil,
+            isOnline: false
+        )
+        // 3. Device 3: Offline customized device (must NOT be purged!)
+        let dev3 = Device(
+            ipAddress: "192.168.1.20",
+            macAddress: "AA:11:22:33:44:02",
+            hostname: "nas.local",
+            customName: "NAS Synology",
+            isOnline: false
+        )
+        // 4. Device 4: Offline uncustomized ghost device (MUST be purged)
+        let dev4 = Device(
+            ipAddress: "192.168.1.30",
+            macAddress: "AA:11:22:33:44:03",
+            hostname: "guest.local",
+            customName: nil,
+            isOnline: false
+        )
+        // 5. Device 5: Ghost without MAC at same IP as Device 1 (MUST be merged/purged)
+        let dev5 = Device(
+            ipAddress: "192.168.1.10",
+            macAddress: nil,
+            hostname: "tv.local",
+            customName: nil,
+            isOnline: false
+        )
+
+        context.insert(dev1)
+        context.insert(dev2)
+        context.insert(dev3)
+        context.insert(dev4)
+        context.insert(dev5)
+        try context.save()
+
+        let removed = DeviceStore.consolidateDatabase(in: context)
+        XCTAssertEqual(removed, 3)
+
+        let remaining = try context.fetch(FetchDescriptor<Device>())
+        XCTAssertEqual(remaining.count, 2)
+
+        let tv = try XCTUnwrap(remaining.first(where: { $0.macAddress == "AA:11:22:33:44:01" }))
+        XCTAssertEqual(tv.customName, "Smart TV")
+
+        let nas = try XCTUnwrap(remaining.first(where: { $0.macAddress == "AA:11:22:33:44:02" }))
+        XCTAssertEqual(nas.customName, "NAS Synology")
+    }
+
     func testInferredIcon() {
         XCTAssertEqual(Device.inferredIcon(for: "Alain-iPad.local", ip: "192.168.1.5"), "ipad")
         XCTAssertEqual(Device.inferredIcon(for: "iPhone-15-Pro.local", ip: "192.168.1.6"), "iphone")
